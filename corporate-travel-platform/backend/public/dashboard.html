@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Corporate Dashboard — AURUM</title>
+  <link rel="stylesheet" href="/css/output.css" />
+</head>
+<body class="min-h-screen bg-navy-950 font-sans text-slate-100 antialiased">
+
+  <header class="sticky top-0 z-30 border-b border-navy-700 bg-navy-950/90 backdrop-blur">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
+      <a href="/" class="flex items-center gap-2">
+        <span class="flex h-9 w-9 items-center justify-center rounded-md bg-gradient-to-br from-gold-300 to-gold-600 font-serif text-lg font-bold text-navy-950">A</span>
+        <span class="font-serif text-xl font-bold tracking-widest text-white">AURUM</span>
+      </a>
+      <div class="flex items-center gap-3">
+        <div class="text-right text-sm">
+          <p id="company-name" class="font-semibold text-white">—</p>
+          <p id="user-name" class="text-xs text-slate-400">—</p>
+        </div>
+        <button id="logout-btn" class="btn-ghost text-sm">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+    <h1 class="mb-1 font-serif text-2xl font-bold text-white">Corporate Travel Dashboard</h1>
+    <p class="mb-8 text-sm text-slate-400">Company travel history, expenditure, and quote requests in one place.</p>
+
+    <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div class="stat-card">
+        <p class="field-label">Total spend (booked)</p>
+        <p id="stat-total-spend" class="font-serif text-2xl font-bold text-gold-300">—</p>
+      </div>
+      <div class="stat-card">
+        <p class="field-label">Itineraries on file</p>
+        <p id="stat-trip-count" class="font-serif text-2xl font-bold text-white">—</p>
+      </div>
+      <div class="stat-card">
+        <p class="field-label">Pending quote requests</p>
+        <p id="stat-pending-quotes" class="font-serif text-2xl font-bold text-white">—</p>
+      </div>
+    </div>
+
+    <section class="mb-8">
+      <div class="mb-3 flex items-center justify-between">
+        <h2 class="font-serif text-lg font-semibold text-white">Monthly expenditure</h2>
+      </div>
+      <div class="panel-card overflow-x-auto">
+        <table class="table-luxury">
+          <thead>
+            <tr><th>Month</th><th>Trips</th><th>Total spend</th></tr>
+          </thead>
+          <tbody id="expense-summary-body"></tbody>
+        </table>
+        <p id="expense-empty" class="hidden py-4 text-center text-sm text-slate-500">No booked spend recorded yet.</p>
+      </div>
+    </section>
+
+    <section class="mb-8">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h2 class="font-serif text-lg font-semibold text-white">Travel history</h2>
+        <div class="flex gap-2">
+          <a href="/api/corporate/expenses/export.csv" class="btn-outline-gold text-sm">Export CSV</a>
+          <a href="/api/corporate/expenses/export.pdf" class="btn-outline-gold text-sm">Export PDF</a>
+        </div>
+      </div>
+      <div class="panel-card overflow-x-auto">
+        <table class="table-luxury">
+          <thead>
+            <tr><th>Date</th><th>Traveler</th><th>Route</th><th>Cabin</th><th>Airline</th><th>Status</th><th>Price</th></tr>
+          </thead>
+          <tbody id="bookings-body"></tbody>
+        </table>
+        <p id="bookings-empty" class="hidden py-4 text-center text-sm text-slate-500">No trips booked yet.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="mb-3 font-serif text-lg font-semibold text-white">Quote &amp; invoice requests</h2>
+      <div class="panel-card overflow-x-auto">
+        <table class="table-luxury">
+          <thead>
+            <tr><th>Requested</th><th>Traveler</th><th>Route</th><th>Cabin</th><th>Status</th><th>Invoice</th><th>Notes</th></tr>
+          </thead>
+          <tbody id="quotes-body"></tbody>
+        </table>
+        <p id="quotes-empty" class="hidden py-4 text-center text-sm text-slate-500">No quote requests submitted yet — request one from the flight search results page.</p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/js/dashboard.js"></script>
+</body>
+</html>

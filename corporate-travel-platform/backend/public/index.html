@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AURUM — Business &amp; First Class Travel</title>
+  <meta name="description" content="Live Business and First Class flight search for discerning travelers and corporate travel accounts." />
+  <link rel="stylesheet" href="/css/output.css" />
+</head>
+<body class="min-h-screen bg-navy-950 font-sans text-slate-100 antialiased">
+
+  <!-- ======================= HEADER ======================= -->
+  <header class="sticky top-0 z-30 border-b border-navy-700 bg-navy-950/90 backdrop-blur">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
+      <a href="/" class="flex items-center gap-2">
+        <span class="flex h-9 w-9 items-center justify-center rounded-md bg-gradient-to-br from-gold-300 to-gold-600 font-serif text-lg font-bold text-navy-950">A</span>
+        <span class="font-serif text-xl font-bold tracking-widest text-white">AURUM</span>
+      </a>
+      <nav class="flex items-center gap-4">
+        <span class="hidden text-xs uppercase tracking-widest text-slate-400 sm:block">Business &amp; First Class Only</span>
+        <a id="portal-link" href="/login.html" class="btn-outline-gold text-sm">Corporate Portal</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
+
+    <!-- ======================= SEARCH HERO ======================= -->
+    <section class="mt-10 rounded-2xl border border-navy-700 bg-gradient-to-br from-navy-900 via-navy-900 to-navy-800 p-4 shadow-2xl sm:p-10">
+      <p class="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-gold-300">Private &amp; Corporate Travel Desk</p>
+      <h1 class="mb-1 font-serif text-3xl font-bold text-white sm:text-4xl">Business &amp; First Class, Uncompromised.</h1>
+      <p class="mb-8 max-w-2xl text-sm text-slate-400 sm:text-base">Live premium-cabin availability, lie-flat seating, lounge access and baggage details — searched directly, booked in a new tab, never redirected against your will.</p>
+
+      <div class="panel-card">
+        <form id="flights-form" novalidate>
+          <fieldset class="mb-5 flex flex-wrap gap-5 text-sm font-medium text-slate-300">
+            <legend class="sr-only">Trip type</legend>
+            <label class="flex items-center gap-1.5">
+              <input type="radio" name="tripType" value="roundtrip" checked class="text-gold-400 focus:ring-gold-400" />
+              Round-trip
+            </label>
+            <label class="flex items-center gap-1.5">
+              <input type="radio" name="tripType" value="oneway" class="text-gold-400 focus:ring-gold-400" />
+              One-way
+            </label>
+            <label class="flex items-center gap-1.5">
+              <input type="radio" name="tripType" value="multicity" class="text-gold-400 focus:ring-gold-400" />
+              Multi-city
+            </label>
+          </fieldset>
+
+          <!-- Simple (one-way / round-trip) fields -->
+          <div id="simple-trip-fields" class="grid grid-cols-1 gap-4 md:grid-cols-6">
+            <div class="relative md:col-span-2">
+              <label class="field-label" for="origin-input">From</label>
+              <input id="origin-input" type="text" autocomplete="off" placeholder="City or airport" class="field-input" required />
+              <input id="origin-code" type="hidden" />
+              <ul id="origin-suggestions" class="autocomplete-list hidden"></ul>
+            </div>
+
+            <div class="flex items-end justify-center">
+              <button type="button" id="swap-locations-btn" title="Swap origin and destination"
+                class="mb-0.5 flex h-10 w-10 items-center justify-center rounded-full border border-navy-600 text-slate-400 transition hover:border-gold-400 hover:text-gold-300 md:mb-1">
+                ⇄
+              </button>
+            </div>
+
+            <div class="relative md:col-span-2">
+              <label class="field-label" for="destination-input">To</label>
+              <input id="destination-input" type="text" autocomplete="off" placeholder="City or airport" class="field-input" required />
+              <input id="destination-code" type="hidden" />
+              <ul id="destination-suggestions" class="autocomplete-list hidden"></ul>
+            </div>
+
+            <div class="md:col-span-1">
+              <label class="field-label" for="depart-date">Depart</label>
+              <input id="depart-date" type="date" class="field-input" required />
+            </div>
+
+            <div class="md:col-span-1" id="return-date-wrapper">
+              <label class="field-label" for="return-date">Return</label>
+              <input id="return-date" type="date" class="field-input" />
+            </div>
+          </div>
+
+          <!-- Multi-city dynamic legs -->
+          <div id="multicity-fields" class="hidden space-y-3">
+            <div id="legs-container" class="space-y-3"></div>
+            <button type="button" id="add-leg-btn" class="btn-outline-gold text-sm">+ Add another flight</button>
+          </div>
+
+          <div class="mt-5 grid grid-cols-2 gap-4 md:grid-cols-6">
+            <div class="md:col-span-1">
+              <label class="field-label" for="flights-adults">Travelers</label>
+              <input id="flights-adults" type="number" min="1" max="9" value="1" class="field-input" />
+            </div>
+            <div class="md:col-span-2">
+              <label class="field-label" for="cabin-class">Cabin</label>
+              <select id="cabin-class" class="field-input">
+                <option value="BUSINESS" selected>Business Class</option>
+                <option value="FIRST">First Class</option>
+              </select>
+            </div>
+            <div class="flex items-end md:col-span-3">
+              <button type="submit" class="btn-gold w-full">Search Premium Cabins</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ======================= RESULTS ======================= -->
+    <section id="results-section" class="mt-10 hidden">
+      <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 id="results-heading" class="font-serif text-lg font-semibold text-white"></h2>
+        <div class="flex items-center gap-2">
+          <label for="sort-select" class="text-sm text-slate-400">Sort by</label>
+          <select id="sort-select" class="field-input !w-auto">
+            <option value="best-value">Best Value</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="duration-asc">Duration: Shortest</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-4">
+        <!-- Filters -->
+        <aside class="lg:col-span-1">
+          <div id="filters-flights" class="filter-panel space-y-5">
+            <div>
+              <h3 class="mb-2 text-sm font-semibold text-white">Stops</h3>
+              <label class="checkbox-row"><input type="checkbox" id="filter-stop-direct" checked class="rounded text-gold-400" /> Direct</label>
+              <label class="checkbox-row"><input type="checkbox" id="filter-stop-1" checked class="rounded text-gold-400" /> 1 Stop</label>
+              <label class="checkbox-row"><input type="checkbox" id="filter-stop-2plus" checked class="rounded text-gold-400" /> 2+ Stops</label>
+            </div>
+            <div>
+              <h3 class="mb-2 text-sm font-semibold text-white">Max price</h3>
+              <input type="range" id="filter-flight-max-price" class="w-full accent-gold-400" />
+              <p class="mt-1 text-sm text-slate-400">Up to <span id="filter-flight-max-price-value">--</span></p>
+            </div>
+            <div>
+              <h3 class="mb-2 text-sm font-semibold text-white">Airlines</h3>
+              <div id="filter-airlines-list" class="max-h-48 space-y-1 overflow-y-auto pr-1"></div>
+            </div>
+            <button type="button" id="reset-flight-filters" class="btn-ghost w-full text-sm">Reset filters</button>
+          </div>
+        </aside>
+
+        <!-- Results list -->
+        <div class="lg:col-span-3">
+          <div id="skeleton-container" class="hidden space-y-4"></div>
+          <div id="error-state" class="hidden rounded-xl border border-rose-800 bg-rose-950/40 p-6 text-center text-rose-300"></div>
+          <div id="empty-state" class="hidden rounded-xl border border-navy-600 bg-navy-800/60 p-10 text-center text-slate-400">
+            No Business/First Class availability matches your filters. Try widening your search.
+          </div>
+          <div id="results-list" class="space-y-4"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ======================= QUOTE REQUEST MODAL ======================= -->
+  <div id="quote-modal" class="fixed inset-0 z-40 hidden items-center justify-center bg-black/70 p-4">
+    <div class="w-full max-w-md rounded-xl border border-navy-600 bg-navy-900 p-6 shadow-2xl">
+      <h3 class="mb-1 font-serif text-lg font-semibold text-white">Request Invoice Quote</h3>
+      <p class="mb-4 text-sm text-slate-400">Submit this itinerary to your Aurum account manager for a custom corporate invoice.</p>
+      <form id="quote-form" class="space-y-3">
+        <div>
+          <label class="field-label" for="quote-traveler-name">Traveler name</label>
+          <input id="quote-traveler-name" type="text" class="field-input" required />
+        </div>
+        <div>
+          <label class="field-label" for="quote-notes">Notes for your travel desk (optional)</label>
+          <textarea id="quote-notes" rows="3" class="field-input"></textarea>
+        </div>
+        <p id="quote-error" class="hidden text-sm text-rose-400"></p>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" id="quote-cancel-btn" class="btn-ghost text-sm">Cancel</button>
+          <button type="submit" class="btn-gold text-sm">Submit Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================= FOOTER ======================= -->
+  <footer class="border-t border-navy-700 bg-navy-950 py-8">
+    <div class="mx-auto max-w-6xl px-4 text-center text-xs text-slate-500 sm:px-6">
+      <p>Premium-cabin availability is retrieved live and may change before booking. "Book Now" opens the airline/booking partner's site in a new tab.</p>
+      <p class="mt-1">Some outbound links are affiliate links — booking through them may earn Aurum a commission at no extra cost to you.</p>
+      <p class="mt-3"><a href="/login.html" class="text-gold-400 hover:underline">Corporate travel desk login</a></p>
+    </div>
+  </footer>
+
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>

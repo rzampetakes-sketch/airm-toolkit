@@ -1,0 +1,119 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-navy-950 text-slate-100;
+  }
+}
+
+@layer components {
+  .btn-gold {
+    @apply inline-flex items-center justify-center rounded-md bg-gradient-to-b from-gold-300 to-gold-500 px-5 py-2.5 font-semibold text-navy-950 shadow-md transition hover:from-gold-200 hover:to-gold-400 focus:outline-none focus:ring-2 focus:ring-gold-300 focus:ring-offset-2 focus:ring-offset-navy-900 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-outline-gold {
+    @apply inline-flex items-center justify-center rounded-md border border-gold-400/60 px-4 py-2 font-medium text-gold-200 transition hover:bg-gold-400/10 focus:outline-none focus:ring-2 focus:ring-gold-300;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-md px-4 py-2 font-medium text-slate-300 transition hover:bg-white/5 hover:text-white;
+  }
+
+  .field-input {
+    @apply w-full rounded-md border border-navy-600 bg-navy-800 px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-gold-400 focus:outline-none focus:ring-1 focus:ring-gold-400;
+  }
+
+  .field-label {
+    @apply mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400;
+  }
+
+  .tab-btn {
+    @apply rounded-full px-5 py-2 text-sm font-semibold text-slate-400 transition hover:text-gold-300;
+  }
+
+  .tab-btn.active {
+    @apply bg-gold-400/15 text-gold-200 ring-1 ring-gold-400/40;
+  }
+
+  .panel-card {
+    @apply rounded-xl border border-navy-600 bg-navy-800/60 p-4 shadow-xl backdrop-blur sm:p-6;
+  }
+
+  .result-card {
+    @apply rounded-xl border border-navy-600 bg-navy-800/60 p-5 shadow-lg transition hover:border-gold-400/40;
+  }
+
+  .skeleton {
+    @apply animate-pulse rounded-xl border border-navy-600 bg-navy-800/60 p-5;
+  }
+
+  .skeleton-bar {
+    @apply rounded bg-navy-600;
+  }
+
+  .filter-panel {
+    @apply rounded-xl border border-navy-600 bg-navy-800/60 p-4 shadow-lg;
+  }
+
+  .checkbox-row {
+    @apply flex items-center gap-2 py-1 text-sm text-slate-300;
+  }
+
+  .cabin-badge {
+    @apply rounded-full border border-gold-400/50 bg-gold-400/10 px-2.5 py-0.5 text-xs font-semibold tracking-wide text-gold-200;
+  }
+
+  .amenity-pill {
+    @apply inline-flex items-center gap-1 rounded-full bg-navy-700 px-2.5 py-1 text-xs text-slate-300;
+  }
+
+  .autocomplete-list {
+    @apply absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-md border border-navy-600 bg-navy-800 py-1 shadow-2xl;
+  }
+
+  .autocomplete-item {
+    @apply cursor-pointer px-3 py-2 text-sm text-slate-200 hover:bg-gold-400/10;
+  }
+
+  .autocomplete-item.active {
+    @apply bg-gold-400/10 text-gold-200;
+  }
+
+  .stat-card {
+    @apply rounded-xl border border-navy-600 bg-navy-800/60 p-5 shadow-lg;
+  }
+
+  .table-luxury {
+    @apply w-full border-collapse text-left text-sm;
+  }
+
+  .table-luxury th {
+    @apply border-b border-navy-600 py-2 pr-4 text-xs font-semibold uppercase tracking-wide text-slate-400;
+  }
+
+  .table-luxury td {
+    @apply border-b border-navy-700/60 py-2.5 pr-4 text-slate-200;
+  }
+
+  .status-pill {
+    @apply rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+
+  .status-pill.booked {
+    @apply bg-emerald-400/15 text-emerald-300;
+  }
+
+  .status-pill.quote_requested {
+    @apply bg-amber-400/15 text-amber-300;
+  }
+
+  .status-pill.quoted {
+    @apply bg-sky-400/15 text-sky-300;
+  }
+
+  .status-pill.declined {
+    @apply bg-rose-400/15 text-rose-300;
+  }
+}

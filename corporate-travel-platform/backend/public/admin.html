@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel — AURUM</title>
+  <link rel="stylesheet" href="/css/output.css" />
+</head>
+<body class="min-h-screen bg-navy-950 font-sans text-slate-100 antialiased">
+
+  <header class="sticky top-0 z-30 border-b border-navy-700 bg-navy-950/90 backdrop-blur">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
+      <a href="/" class="flex items-center gap-2">
+        <span class="flex h-9 w-9 items-center justify-center rounded-md bg-gradient-to-br from-gold-300 to-gold-600 font-serif text-lg font-bold text-navy-950">A</span>
+        <span class="font-serif text-xl font-bold tracking-widest text-white">AURUM <span class="text-gold-400">Admin</span></span>
+      </a>
+      <div class="flex items-center gap-3">
+        <p id="admin-name" class="text-sm text-slate-300">—</p>
+        <button id="logout-btn" class="btn-ghost text-sm">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+    <h1 class="mb-1 font-serif text-2xl font-bold text-white">Corporate Accounts Admin</h1>
+    <p class="mb-8 text-sm text-slate-400">Manage every corporate account, itinerary and quote request from one desk.</p>
+
+    <section class="mb-8">
+      <h2 class="mb-3 font-serif text-lg font-semibold text-white">Corporate accounts</h2>
+      <div class="panel-card overflow-x-auto">
+        <table class="table-luxury">
+          <thead>
+            <tr><th>Company</th><th>Billing email</th><th>Users</th><th>Bookings</th><th>Total spend</th></tr>
+          </thead>
+          <tbody id="companies-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="mb-8">
+      <h2 class="mb-3 font-serif text-lg font-semibold text-white">Pending quote requests</h2>
+      <div class="panel-card overflow-x-auto">
+        <table class="table-luxury">
+          <thead>
+            <tr><th>Company</th><th>Traveler</th><th>Route</th><th>Cabin</th><th>Depart</th><th>Notes</th><th>Action</th></tr>
+          </thead>
+          <tbody id="pending-quotes-body"></tbody>
+        </table>
+        <p id="pending-quotes-empty" class="hidden py-4 text-center text-sm text-slate-500">No pending quote requests.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="mb-3 font-serif text-lg font-semibold text-white">All bookings</h2>
+      <div class="panel-card overflow-x-auto">
+        <table class="table-luxury">
+          <thead>
+            <tr><th>Date</th><th>Company</th><th>Traveler</th><th>Route</th><th>Cabin</th><th>Status</th><th>Price</th></tr>
+          </thead>
+          <tbody id="all-bookings-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Resolve quote modal -->
+  <div id="resolve-modal" class="fixed inset-0 z-40 hidden items-center justify-center bg-black/70 p-4">
+    <div class="w-full max-w-md rounded-xl border border-navy-600 bg-navy-900 p-6 shadow-2xl">
+      <h3 class="mb-4 font-serif text-lg font-semibold text-white">Resolve Quote Request</h3>
+      <form id="resolve-form" class="space-y-3">
+        <div>
+          <label class="field-label">Decision</label>
+          <select id="resolve-status" class="field-input">
+            <option value="quoted">Send invoice quote</option>
+            <option value="declined">Decline request</option>
+          </select>
+        </div>
+        <div id="invoice-amount-wrapper">
+          <label class="field-label" for="resolve-amount">Invoice amount (USD)</label>
+          <input id="resolve-amount" type="number" min="0" step="1" class="field-input" />
+        </div>
+        <div>
+          <label class="field-label" for="resolve-notes">Note to client</label>
+          <textarea id="resolve-notes" rows="3" class="field-input"></textarea>
+        </div>
+        <p id="resolve-error" class="hidden text-sm text-rose-400"></p>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" id="resolve-cancel-btn" class="btn-ghost text-sm">Cancel</button>
+          <button type="submit" class="btn-gold text-sm">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="/js/admin.js"></script>
+</body>
+</html>
