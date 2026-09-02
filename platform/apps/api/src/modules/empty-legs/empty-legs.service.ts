@@ -1,9 +1,11 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import { EmptyLegListing, EmptyLegSearchParams } from "@travel-platform/types";
 import { EMPTY_LEG_PROVIDERS, EmptyLegProvider } from "./providers/empty-leg-provider.interface";
 
 @Injectable()
 export class EmptyLegsService {
+  private readonly logger = new Logger(EmptyLegsService.name);
+
   constructor(@Inject(EMPTY_LEG_PROVIDERS) private readonly providers: EmptyLegProvider[]) {}
 
   /**
@@ -19,6 +21,12 @@ export class EmptyLegsService {
     const resultsByProvider = await Promise.allSettled(
       enabledProviders.map((provider) => provider.search(params)),
     );
+
+    resultsByProvider.forEach((result, index) => {
+      if (result.status === "rejected") {
+        this.logger.error(`${enabledProviders[index].source} provider failed: ${result.reason}`);
+      }
+    });
 
     const listings = resultsByProvider
       .filter((result): result is PromiseFulfilledResult<EmptyLegListing[]> => result.status === "fulfilled")

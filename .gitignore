@@ -16,4 +16,8 @@ platform/**/dist/
 .turbo/
 .env
 !.env.example
+# Symlinks so apps/api and apps/web resolve the one root .env themselves —
+# see platform/apps/api/.env and platform/apps/web/.env.
+!platform/apps/api/.env
+!platform/apps/web/.env
 *.tsbuildinfo

@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { FlightOffer, FlightSearchParams } from "@travel-platform/types";
 import { DuffelFlightProvider } from "./providers/duffel/duffel-flight.provider";
 import { AmadeusFlightProvider } from "./providers/amadeus/amadeus-flight.provider";
@@ -8,6 +8,7 @@ import { FlightProvider } from "./providers/flight-provider.interface";
 
 @Injectable()
 export class FlightsService {
+  private readonly logger = new Logger(FlightsService.name);
   private readonly providers: FlightProvider[];
 
   constructor(
@@ -33,6 +34,12 @@ export class FlightsService {
     const resultsByProvider = await Promise.allSettled(
       enabledProviders.map((provider) => provider.search(params)),
     );
+
+    resultsByProvider.forEach((result, index) => {
+      if (result.status === "rejected") {
+        this.logger.error(`${enabledProviders[index].source} provider failed: ${result.reason}`);
+      }
+    });
 
     const offers = resultsByProvider
       .filter((result): result is PromiseFulfilledResult<FlightOffer[]> => result.status === "fulfilled")

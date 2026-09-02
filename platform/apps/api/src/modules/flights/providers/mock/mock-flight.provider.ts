@@ -22,7 +22,8 @@ export class MockFlightProvider implements FlightProvider {
     const basePrice = params.cabinClass === "first" ? 8500 : 4200;
 
     return MOCK_AIRLINES.map((airline, index) => {
-      const departureAt = new Date(`${params.departureDate}T${8 + index * 2}:00:00Z`);
+      const hour = String(8 + index * 2).padStart(2, "0");
+      const departureAt = new Date(`${params.departureDate}T${hour}:00:00Z`);
       const durationMinutes = 420 + index * 30;
       const arrivalAt = new Date(departureAt.getTime() + durationMinutes * 60_000);
 
