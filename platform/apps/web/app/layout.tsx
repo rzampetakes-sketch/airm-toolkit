@@ -1,10 +1,14 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Cormorant_Garamond, Work_Sans } from "next/font/google";
 import { LiveChatWidget } from "../components/LiveChatWidget";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space-grotesk" });
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-cormorant",
+});
+const workSans = Work_Sans({ subsets: ["latin"], variable: "--font-work-sans" });
 
 export const metadata: Metadata = {
   title: "Business/First Class Search & Empty Leg Marketplace",
@@ -13,8 +17,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
-      <body className="bg-charcoal text-white font-body">
+    <html lang="en" className={`${cormorant.variable} ${workSans.variable}`}>
+      <body className="bg-cream text-ink font-body">
         {children}
         <LiveChatWidget />
       </body>

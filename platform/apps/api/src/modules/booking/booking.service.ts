@@ -1,5 +1,5 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import { BagType, FlightOffer, PassengerInput } from "@travel-platform/types";
+import { BadGatewayException, BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BagType, EmptyLegListing, FlightOffer, PassengerInput } from "@travel-platform/types";
 import { PrismaService } from "../../common/prisma/prisma.service";
 import { PaymentsService } from "../payments/payments.service";
 
@@ -85,17 +85,45 @@ export class BookingService {
   }
 
   /**
+   * `listing` is the exact EmptyLegListing the client got back from
+   * GET /empty-legs/search. Only `platform_listed` listings (an
+   * Operator's own inventory) already exist as a real `EmptyLeg` row —
+   * everything else (mock, Avinode, ...) is provider-search output that,
+   * like FlightOffer, was never persisted (see EmptyLegsService). So the
+   * listing the customer actually chose is cached here into a real row
+   * first, exactly mirroring startFlightBooking's Flight-caching step.
+   *
    * Empty-leg inventory is scarce enough that we hold the seat for the
    * duration of checkout, the same tradeoff an airline makes with a seat
    * hold — flips `EmptyLeg.status` to `booked` immediately rather than
    * only at final payment. TODO: a TTL-based release job for abandoned
    * drafts (e.g. reopen after 15 minutes with no `checkout()` call).
    */
-  async startEmptyLegBooking(userId: string, emptyLegId: string) {
+  async startEmptyLegBooking(userId: string, listing: EmptyLegListing) {
     return this.prisma.$transaction(async (tx) => {
-      const emptyLeg = await tx.emptyLeg.findUnique({ where: { id: emptyLegId } });
+      const emptyLeg =
+        listing.source === "platform_listed"
+          ? await tx.emptyLeg.findUnique({ where: { id: listing.id } })
+          : await tx.emptyLeg.create({
+              data: {
+                operatorId: listing.operatorId,
+                operatorName: listing.operatorName,
+                source: listing.source,
+                sourceListingId: listing.id,
+                aircraftType: listing.aircraftType,
+                origin: listing.origin,
+                destination: listing.destination,
+                departureAt: new Date(listing.departureAt),
+                arrivalAt: new Date(listing.arrivalAt),
+                seatsAvailable: listing.seatsAvailable,
+                amount: listing.amount,
+                currency: listing.currency,
+                status: "available",
+              },
+            });
+
       if (!emptyLeg) {
-        throw new NotFoundException(`EmptyLeg ${emptyLegId} not found`);
+        throw new NotFoundException(`EmptyLeg ${listing.id} not found`);
       }
       if (emptyLeg.status !== "available") {
         throw new BadRequestException(`This empty leg is no longer available (status: ${emptyLeg.status})`);
@@ -113,6 +141,26 @@ export class BookingService {
           currency: emptyLeg.currency,
         },
       });
+    });
+  }
+
+  /**
+   * Full current state of a Booking for the checkout UI to render —
+   * everything attached to it so far, in one call, rather than the
+   * frontend having to stitch together several endpoints.
+   */
+  getBooking(bookingId: string) {
+    return this.prisma.booking.findUniqueOrThrow({
+      where: { id: bookingId },
+      include: {
+        flight: { include: { segments: { orderBy: { sequence: "asc" } } } },
+        emptyLeg: true,
+        passengers: { include: { seatSelections: true, baggageSelections: true } },
+        hotelBookings: true,
+        carRentalBookings: true,
+        taxiBookings: true,
+        payments: true,
+      },
     });
   }
 
@@ -236,7 +284,18 @@ export class BookingService {
     }
 
     await this.prisma.booking.update({ where: { id: bookingId }, data: { status: "pending_payment" } });
-    return this.paymentsService.createPaymentForBooking(bookingId);
+
+    try {
+      return await this.paymentsService.createPaymentForBooking(bookingId);
+    } catch (error) {
+      // Revert to draft so the customer can retry once real Stripe
+      // credentials are configured, rather than getting stuck in
+      // pending_payment with no payment record.
+      await this.prisma.booking.update({ where: { id: bookingId }, data: { status: "draft" } });
+      throw new BadGatewayException(
+        "Payment could not be processed. This environment has no live Stripe key configured — see STRIPE_SECRET_KEY in .env.",
+      );
+    }
   }
 
   private priceSeat(seatNumber: string): number {

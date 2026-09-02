@@ -5,17 +5,18 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Dashboard/concierge palette: near-black charcoal, petrol teal
-        // structural accent, orange as the sole CTA/highlight color.
-        charcoal: "#0a0d0d",
-        panel: "#12181a",
-        teal: "#1f9d8a",
-        "teal-glow": "#0f2a27",
-        orange: "#f97316",
+        // Boutique concierge palette: warm cream, deep wine burgundy,
+        // muted brass/gold reserved for accents and premium details.
+        cream: "#f7f0e3",
+        "cream-deep": "#efe1c8",
+        burgundy: "#5c1526",
+        "burgundy-dark": "#3d0e1a",
+        gold: "#a9834a",
+        ink: "#2a1c1a",
       },
       fontFamily: {
-        display: ["var(--font-space-grotesk)", "sans-serif"],
-        body: ["var(--font-inter)", "sans-serif"],
+        display: ["var(--font-cormorant)", "serif"],
+        body: ["var(--font-work-sans)", "sans-serif"],
       },
     },
   },

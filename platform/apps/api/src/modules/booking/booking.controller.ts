@@ -1,10 +1,15 @@
-import { Body, Controller, Param, Post } from "@nestjs/common";
-import { BagType, FlightOffer, PassengerInput } from "@travel-platform/types";
+import { Body, Controller, Get, Param, Post } from "@nestjs/common";
+import { BagType, EmptyLegListing, FlightOffer, PassengerInput } from "@travel-platform/types";
 import { BookingService } from "./booking.service";
 
 @Controller("bookings")
 export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
+
+  @Get(":bookingId")
+  getBooking(@Param("bookingId") bookingId: string) {
+    return this.bookingService.getBooking(bookingId);
+  }
 
   /** `offer` is the FlightOffer object returned by GET /flights/search, passed back verbatim. */
   @Post("flights")
@@ -12,9 +17,10 @@ export class BookingController {
     return this.bookingService.startFlightBooking(dto.userId, dto.offer);
   }
 
+  /** `listing` is the EmptyLegListing object returned by GET /empty-legs/search, passed back verbatim. */
   @Post("empty-legs")
-  startEmptyLegBooking(@Body() dto: { userId: string; emptyLegId: string }) {
-    return this.bookingService.startEmptyLegBooking(dto.userId, dto.emptyLegId);
+  startEmptyLegBooking(@Body() dto: { userId: string; listing: EmptyLegListing }) {
+    return this.bookingService.startEmptyLegBooking(dto.userId, dto.listing);
   }
 
   @Post(":bookingId/passengers")
