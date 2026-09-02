@@ -8,3 +8,12 @@ build/
 .venv/
 venv/
 *.egg
+
+# platform/ (Next.js + NestJS monorepo)
+node_modules/
+.next/
+platform/**/dist/
+.turbo/
+.env
+!.env.example
+*.tsbuildinfo

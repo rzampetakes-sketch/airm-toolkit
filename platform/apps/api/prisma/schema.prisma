@@ -1,0 +1,319 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  b2c
+  b2b_agent
+  admin
+  ops
+}
+
+enum CompanyType {
+  b2b_agency
+  corporate
+}
+
+enum LoyaltyTier {
+  silver
+  gold
+  platinum
+  black
+}
+
+enum LoyaltyEntryType {
+  earn
+  redeem
+  adjust
+  expire
+}
+
+enum OfferSource {
+  duffel
+  amadeus
+  sabre
+  avinode
+  empty_leg
+}
+
+enum OfferType {
+  commercial_flight
+  private_jet_charter
+  empty_leg
+}
+
+enum MarkupScopeType {
+  route
+  aircraft_type
+  cabin_class
+  customer_segment
+  global
+}
+
+enum MarkupType {
+  percentage
+  fixed
+}
+
+enum BookingStatus {
+  pending_payment
+  charter_requested
+  confirmed
+  ticketed
+  cancelled
+  failed
+}
+
+enum PaymentStatus {
+  unpaid
+  authorized
+  captured
+  refunded
+}
+
+enum SegmentType {
+  flight
+  charter_leg
+  hotel
+  transfer
+}
+
+enum NotificationChannel {
+  whatsapp
+  sms
+  email
+}
+
+enum NotificationStatus {
+  queued
+  sent
+  delivered
+  failed
+}
+
+model Company {
+  id              String   @id @default(uuid())
+  name            String
+  type            CompanyType
+  billingCurrency String   @map("billing_currency")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  users    User[]
+  bookings Booking[]
+
+  @@map("companies")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  companyId String?  @map("company_id")
+  email     String   @unique
+  phone     String?
+  firstName String   @map("first_name")
+  lastName  String   @map("last_name")
+  role      UserRole @default(b2c)
+  kycStatus String   @default("unverified") @map("kyc_status")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  company         Company?         @relation(fields: [companyId], references: [id])
+  loyaltyAccount  LoyaltyAccount?
+  bookings        Booking[]
+  notifications   NotificationLog[]
+
+  @@map("users")
+}
+
+model LoyaltyAccount {
+  id             String      @id @default(uuid())
+  userId         String      @unique @map("user_id")
+  pointsBalance  Int         @default(0) @map("points_balance")
+  tier           LoyaltyTier @default(silver)
+  createdAt      DateTime    @default(now()) @map("created_at")
+
+  user    User                   @relation(fields: [userId], references: [id])
+  entries LoyaltyLedgerEntry[]
+
+  @@map("loyalty_accounts")
+}
+
+model LoyaltyLedgerEntry {
+  id               String           @id @default(uuid())
+  loyaltyAccountId String           @map("loyalty_account_id")
+  bookingId        String?          @map("booking_id")
+  entryType        LoyaltyEntryType @map("entry_type")
+  source           String
+  points           Int
+  balanceAfter     Int              @map("balance_after")
+  notes            String?
+  createdAt        DateTime         @default(now()) @map("created_at")
+
+  loyaltyAccount LoyaltyAccount @relation(fields: [loyaltyAccountId], references: [id])
+  booking        Booking?       @relation(fields: [bookingId], references: [id])
+
+  @@index([loyaltyAccountId])
+  @@map("loyalty_ledger_entries")
+}
+
+model MarkupRule {
+  id           String          @id @default(uuid())
+  name         String
+  scopeType    MarkupScopeType @map("scope_type")
+  scopeValue   Json            @map("scope_value")
+  markupType   MarkupType      @map("markup_type")
+  markupValue  Decimal         @map("markup_value")
+  priority     Int             @default(0)
+  active       Boolean         @default(true)
+  validFrom    DateTime?       @map("valid_from")
+  validTo      DateTime?       @map("valid_to")
+
+  offers Offer[]
+
+  @@index([scopeType, active, priority])
+  @@map("markup_rules")
+}
+
+model Offer {
+  id                  String     @id @default(uuid())
+  source              OfferSource
+  sourceOfferId       String     @map("source_offer_id")
+  offerType           OfferType  @map("offer_type")
+  rawPayload          Json       @map("raw_payload")
+  baseAmount          Decimal    @map("base_amount")
+  baseCurrency        String     @map("base_currency")
+  appliedMarkupRuleId String?    @map("applied_markup_rule_id")
+  finalAmount         Decimal    @map("final_amount")
+  finalCurrency       String     @map("final_currency")
+  expiresAt           DateTime   @map("expires_at")
+  createdAt           DateTime   @default(now()) @map("created_at")
+
+  appliedMarkupRule MarkupRule? @relation(fields: [appliedMarkupRuleId], references: [id])
+  booking           Booking?
+
+  @@map("offers")
+}
+
+model Booking {
+  id                 String        @id @default(uuid())
+  userId             String        @map("user_id")
+  companyId          String?       @map("company_id")
+  offerId            String        @unique @map("offer_id")
+  bookingType        OfferType     @map("booking_type")
+  status             BookingStatus @default(pending_payment)
+  confirmationNumber String?       @map("confirmation_number")
+  totalAmount        Decimal       @map("total_amount")
+  currency           String
+  paymentStatus      PaymentStatus @default(unpaid) @map("payment_status")
+  createdAt          DateTime      @default(now()) @map("created_at")
+
+  user            User                   @relation(fields: [userId], references: [id])
+  company         Company?               @relation(fields: [companyId], references: [id])
+  offer           Offer                  @relation(fields: [offerId], references: [id])
+  segments        BookingSegment[]
+  passengers      Passenger[]
+  payments        Payment[]
+  notifications   NotificationLog[]
+  loyaltyEntries  LoyaltyLedgerEntry[]
+  hotelBooking    HotelBooking?
+  transferBooking TransferBooking?
+
+  @@index([userId])
+  @@index([status])
+  @@map("bookings")
+}
+
+model BookingSegment {
+  id           String      @id @default(uuid())
+  bookingId    String      @map("booking_id")
+  segmentType  SegmentType @map("segment_type")
+  origin       String
+  destination  String
+  departureAt  DateTime    @map("departure_at")
+  arrivalAt    DateTime    @map("arrival_at")
+  details      Json
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId])
+  @@map("booking_segments")
+}
+
+model Passenger {
+  id             String    @id @default(uuid())
+  bookingId      String    @map("booking_id")
+  firstName      String    @map("first_name")
+  lastName       String    @map("last_name")
+  dateOfBirth    DateTime  @map("date_of_birth")
+  passportNumber String?   @map("passport_number")
+  nationality    String?
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId])
+  @@map("passengers")
+}
+
+model Payment {
+  id                     String        @id @default(uuid())
+  bookingId              String        @map("booking_id")
+  stripePaymentIntentId  String        @map("stripe_payment_intent_id")
+  connectedAccountId     String?       @map("connected_account_id")
+  amount                 Decimal
+  currency               String
+  platformFeeAmount      Decimal       @map("platform_fee_amount")
+  status                 PaymentStatus @default(unpaid)
+  createdAt              DateTime      @default(now()) @map("created_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId])
+  @@map("payments")
+}
+
+model NotificationLog {
+  id        String              @id @default(uuid())
+  userId    String              @map("user_id")
+  bookingId String?             @map("booking_id")
+  channel   NotificationChannel
+  template  String
+  status    NotificationStatus  @default(queued)
+  sentAt    DateTime?           @map("sent_at")
+
+  user    User     @relation(fields: [userId], references: [id])
+  booking Booking? @relation(fields: [bookingId], references: [id])
+
+  @@index([userId])
+  @@map("notification_log")
+}
+
+model HotelBooking {
+  id        String   @id @default(uuid())
+  bookingId String   @unique @map("booking_id")
+  hotelName String   @map("hotel_name")
+  roomType  String   @map("room_type")
+  checkIn   DateTime @map("check_in")
+  checkOut  DateTime @map("check_out")
+  amount    Decimal
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@map("hotel_bookings")
+}
+
+model TransferBooking {
+  id              String   @id @default(uuid())
+  bookingId       String   @unique @map("booking_id")
+  vehicleType     String   @map("vehicle_type")
+  pickupLocation  String   @map("pickup_location")
+  dropoffLocation String   @map("dropoff_location")
+  pickupAt        DateTime @map("pickup_at")
+  amount          Decimal
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@map("transfer_bookings")
+}
