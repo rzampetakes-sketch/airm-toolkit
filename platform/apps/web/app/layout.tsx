@@ -1,5 +1,6 @@
 import "./globals.css";
 import type { Metadata } from "next";
+import { LiveChatWidget } from "../components/LiveChatWidget";
 
 export const metadata: Metadata = {
   title: "Business/First Class Search & Empty Leg Marketplace",
@@ -9,7 +10,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="bg-charcoal text-white font-body">{children}</body>
+      <body className="bg-charcoal text-white font-body">
+        {children}
+        <LiveChatWidget />
+      </body>
     </html>
   );
 }

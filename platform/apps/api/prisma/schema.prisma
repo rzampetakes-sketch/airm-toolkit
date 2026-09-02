@@ -30,6 +30,8 @@ enum EmptyLegProviderSource {
   platform_listed
   avinode
   jettly
+  jethunter
+  villiers
   mock
 }
 
@@ -45,7 +47,12 @@ enum BookingType {
   empty_leg
 }
 
+/// `draft` covers the entire checkout journey (flight/empty-leg selected,
+/// passengers/seats/baggage/add-ons being assembled) before payment is
+/// initiated. See BookingService — nothing charges until `checkout()`
+/// moves a Booking from `draft` to `pending_payment`.
 enum BookingStatus {
+  draft
   pending_payment
   confirmed
   cancelled
@@ -59,20 +66,61 @@ enum PaymentStatus {
   refunded
 }
 
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  phone     String?
-  firstName String   @map("first_name")
-  lastName  String   @map("last_name")
-  role      UserRole @default(traveler)
-  operatorId String? @map("operator_id")
-  createdAt DateTime @default(now()) @map("created_at")
+enum BagType {
+  checked
+  carry_on
+}
 
-  operator Operator? @relation(fields: [operatorId], references: [id])
-  bookings Booking[]
+enum HotelProviderSource {
+  partner
+  mock
+}
+
+enum CarRentalProviderSource {
+  partner
+  mock
+}
+
+enum TaxiProviderSource {
+  partner
+  mock
+}
+
+model User {
+  id         String   @id @default(uuid())
+  email      String   @unique
+  phone      String?
+  firstName  String   @map("first_name")
+  lastName   String   @map("last_name")
+  role       UserRole @default(traveler)
+  operatorId String?  @map("operator_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  operator           Operator?           @relation(fields: [operatorId], references: [id])
+  bookings           Booking[]
+  loyaltyMemberships LoyaltyMembership[]
 
   @@map("users")
+}
+
+/// A saved (airline, membership number) pair per user — NOT a
+/// platform-run points program. Its only job is to be copied onto a
+/// Passenger at booking time and forwarded to the airline (e.g. via
+/// Duffel's per-passenger `loyalty_programme_accounts`) so *the airline*
+/// credits miles. See database-schema.md for why this is deliberately
+/// simpler than the loyalty-ledger concept dropped earlier in this
+/// project.
+model LoyaltyMembership {
+  id                String   @id @default(uuid())
+  userId            String   @map("user_id")
+  airlineIataCode   String   @map("airline_iata_code")
+  membershipNumber  String   @map("membership_number")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, airlineIataCode])
+  @@map("loyalty_memberships")
 }
 
 /// A private/business jet operator that lists empty legs directly on the
@@ -98,6 +146,9 @@ model Operator {
 /// search (Duffel/Amadeus/Sabre/Travelport/mock). Not authoritative
 /// inventory — it's a short-lived snapshot a Booking can reference for
 /// audit purposes; `expiresAt` mirrors the provider's own offer TTL.
+/// `FlightSegment` rows are extracted from `rawPayload` at cache-write
+/// time so checkout (seat selection specifically) can reference a
+/// specific leg without re-parsing JSON.
 model Flight {
   id             String               @id @default(uuid())
   source         FlightProviderSource
@@ -115,17 +166,40 @@ model Flight {
   expiresAt      DateTime             @map("expires_at")
   createdAt      DateTime             @default(now()) @map("created_at")
 
-  booking Booking?
+  segments FlightSegment[]
+  booking  Booking?
 
   @@index([origin, destination, departureAt])
   @@map("flights")
 }
 
+model FlightSegment {
+  id              String   @id @default(uuid())
+  flightId        String   @map("flight_id")
+  sequence        Int
+  origin          String
+  destination     String
+  departureAt     DateTime @map("departure_at")
+  arrivalAt       DateTime @map("arrival_at")
+  airline         String
+  flightNumber    String   @map("flight_number")
+  durationMinutes Int      @map("duration_minutes")
+
+  flight         Flight          @relation(fields: [flightId], references: [id])
+  seatSelections SeatSelection[]
+
+  @@index([flightId])
+  @@map("flight_segments")
+}
+
 /// A repositioning-flight listing with empty seats sold at a discount.
 /// Either entered directly by an Operator (`source = platform_listed`,
-/// `operatorId` set) or pulled from an external aggregator like Avinode
-/// or Jettly (`operatorId` may be null; `operatorName`/`sourceListingId`
-/// carry the vendor's own attribution).
+/// `operatorId` set) or pulled from an external aggregator — Avinode,
+/// Jettly, Villiers, or any future one (`operatorId` may be null;
+/// `operatorName`/`sourceListingId` carry the vendor's own attribution).
+/// Adding a new aggregator never changes this table — only
+/// `EmptyLegProviderSource` gains a value and a new provider class is
+/// registered (see empty-legs.module.ts).
 model EmptyLeg {
   id              String                 @id @default(uuid())
   operatorId      String?                @map("operator_id")
@@ -151,29 +225,159 @@ model EmptyLeg {
   @@map("empty_legs")
 }
 
-/// References exactly one of `flightId` / `emptyLegId`, enforced at the
-/// application layer (BookingService) rather than in the schema, since
-/// Prisma has no native "exactly one of" constraint.
+/// The checkout container: one Booking anchors the primary purchase
+/// (exactly one of `flightId` / `emptyLegId`, enforced in BookingService)
+/// plus every passenger/seat/baggage/add-on attached during the same
+/// checkout, and is paid in a single Payment. `totalAmount` accumulates
+/// as selections are added and is locked when `checkout()` moves the
+/// Booking from `draft` to `pending_payment` — see ARCHITECTURE.md.
 model Booking {
   id            String        @id @default(uuid())
   userId        String        @map("user_id")
   bookingType   BookingType   @map("booking_type")
   flightId      String?       @unique @map("flight_id")
   emptyLegId    String?       @unique @map("empty_leg_id")
-  status        BookingStatus @default(pending_payment)
+  status        BookingStatus @default(draft)
   totalAmount   Decimal       @map("total_amount")
   currency      String
   paymentStatus PaymentStatus @default(unpaid) @map("payment_status")
   createdAt     DateTime      @default(now()) @map("created_at")
 
-  user     User      @relation(fields: [userId], references: [id])
-  flight   Flight?   @relation(fields: [flightId], references: [id])
-  emptyLeg EmptyLeg? @relation(fields: [emptyLegId], references: [id])
-  payments Payment[]
+  user               User                @relation(fields: [userId], references: [id])
+  flight             Flight?             @relation(fields: [flightId], references: [id])
+  emptyLeg           EmptyLeg?           @relation(fields: [emptyLegId], references: [id])
+  payments           Payment[]
+  passengers         Passenger[]
+  seatSelections     SeatSelection[]
+  baggageSelections  BaggageSelection[]
+  hotelBookings      HotelBooking[]
+  carRentalBookings  CarRentalBooking[]
+  taxiBookings       TaxiBooking[]
 
   @@index([userId])
   @@index([status])
   @@map("bookings")
+}
+
+/// One row per traveler on a Booking. `loyaltyAirlineIataCode` /
+/// `loyaltyMembershipNumber` are a snapshot copied from the user's saved
+/// `LoyaltyMembership` (or entered fresh) at checkout time — booking a
+/// trip must not silently change what's on file for next time.
+model Passenger {
+  id                     String  @id @default(uuid())
+  bookingId              String  @map("booking_id")
+  firstName              String  @map("first_name")
+  lastName               String  @map("last_name")
+  dateOfBirth            DateTime @map("date_of_birth")
+  passportNumber         String? @map("passport_number")
+  loyaltyAirlineIataCode String? @map("loyalty_airline_iata_code")
+  loyaltyMembershipNumber String? @map("loyalty_membership_number")
+
+  booking           Booking            @relation(fields: [bookingId], references: [id])
+  seatSelections    SeatSelection[]
+  baggageSelections BaggageSelection[]
+
+  @@index([bookingId])
+  @@map("passengers")
+}
+
+/// One seat, for one passenger, on one segment. Unique per
+/// (passenger, segment) — a passenger can't hold two seats on the same
+/// leg. `priceAdjustment` is the seat's own upcharge (0 for a standard
+/// seat included in fare), captured at selection time since seat pricing
+/// is volatile and this is what the customer was actually charged.
+model SeatSelection {
+  id               String  @id @default(uuid())
+  bookingId        String  @map("booking_id")
+  passengerId      String  @map("passenger_id")
+  flightSegmentId  String  @map("flight_segment_id")
+  seatNumber       String  @map("seat_number")
+  priceAdjustment  Decimal @map("price_adjustment")
+  currency         String
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  booking       Booking       @relation(fields: [bookingId], references: [id])
+  passenger     Passenger     @relation(fields: [passengerId], references: [id])
+  flightSegment FlightSegment @relation(fields: [flightSegmentId], references: [id])
+
+  @@unique([passengerId, flightSegmentId])
+  @@map("seat_selections")
+}
+
+/// Baggage is booked per passenger for the whole itinerary (not per
+/// segment) — matches how airlines actually sell extra-bag ancillaries.
+model BaggageSelection {
+  id              String  @id @default(uuid())
+  bookingId       String  @map("booking_id")
+  passengerId     String  @map("passenger_id")
+  bagType         BagType @map("bag_type")
+  quantity        Int
+  priceAdjustment Decimal @map("price_adjustment")
+  currency        String
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  booking   Booking   @relation(fields: [bookingId], references: [id])
+  passenger Passenger @relation(fields: [passengerId], references: [id])
+
+  @@index([bookingId])
+  @@map("baggage_selections")
+}
+
+/// An add-on attached to a Booking during the same checkout (see
+/// BookingService.addHotel). `source = partner` is our contracted hotel
+/// inventory API; `mock` is fixture data for development, same pattern
+/// as every other provider domain in this project.
+model HotelBooking {
+  id               String              @id @default(uuid())
+  bookingId        String              @map("booking_id")
+  source           HotelProviderSource
+  sourcePropertyId String              @map("source_property_id")
+  hotelName        String              @map("hotel_name")
+  roomType         String              @map("room_type")
+  checkIn          DateTime            @map("check_in")
+  checkOut         DateTime            @map("check_out")
+  amount           Decimal
+  currency         String
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId])
+  @@map("hotel_bookings")
+}
+
+model CarRentalBooking {
+  id              String                  @id @default(uuid())
+  bookingId       String                  @map("booking_id")
+  source          CarRentalProviderSource
+  vehicleType     String                  @map("vehicle_type")
+  pickupLocation  String                  @map("pickup_location")
+  dropoffLocation String                  @map("dropoff_location")
+  pickupAt        DateTime                @map("pickup_at")
+  dropoffAt       DateTime                @map("dropoff_at")
+  amount          Decimal
+  currency        String
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId])
+  @@map("car_rental_bookings")
+}
+
+model TaxiBooking {
+  id              String            @id @default(uuid())
+  bookingId       String            @map("booking_id")
+  source          TaxiProviderSource
+  vehicleType     String            @map("vehicle_type")
+  pickupLocation  String            @map("pickup_location")
+  dropoffLocation String            @map("dropoff_location")
+  pickupAt        DateTime          @map("pickup_at")
+  amount          Decimal
+  currency        String
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId])
+  @@map("taxi_bookings")
 }
 
 model Payment {
