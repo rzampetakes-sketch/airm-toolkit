@@ -6,6 +6,6 @@ export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
   findById(id: string) {
-    return this.prisma.user.findUnique({ where: { id }, include: { loyaltyAccount: true, company: true } });
+    return this.prisma.user.findUnique({ where: { id }, include: { operator: true } });
   }
 }

@@ -3,8 +3,9 @@ import Stripe from "stripe";
 
 /**
  * Platform is the merchant of record: charges the traveler on the
- * platform's own Stripe account, and (for charter) optionally splits a
- * payout to the operator's connected account via Stripe Connect.
+ * platform's own Stripe account, and (for empty-leg bookings against a
+ * verified operator) optionally splits a payout to the operator's
+ * connected account via Stripe Connect.
  */
 @Injectable()
 export class StripeAdapter {

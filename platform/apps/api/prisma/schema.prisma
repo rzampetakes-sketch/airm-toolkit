@@ -8,63 +8,46 @@ datasource db {
 }
 
 enum UserRole {
-  b2c
-  b2b_agent
+  traveler
+  operator
   admin
-  ops
 }
 
-enum CompanyType {
-  b2b_agency
-  corporate
+enum CabinClass {
+  business
+  first
 }
 
-enum LoyaltyTier {
-  silver
-  gold
-  platinum
-  black
-}
-
-enum LoyaltyEntryType {
-  earn
-  redeem
-  adjust
-  expire
-}
-
-enum OfferSource {
+enum FlightProviderSource {
   duffel
   amadeus
   sabre
+  travelport
+  mock
+}
+
+enum EmptyLegProviderSource {
+  platform_listed
   avinode
+  jettly
+  mock
+}
+
+enum EmptyLegStatus {
+  available
+  booked
+  expired
+  cancelled
+}
+
+enum BookingType {
+  flight
   empty_leg
-}
-
-enum OfferType {
-  commercial_flight
-  private_jet_charter
-  empty_leg
-}
-
-enum MarkupScopeType {
-  route
-  aircraft_type
-  cabin_class
-  customer_segment
-  global
-}
-
-enum MarkupType {
-  percentage
-  fixed
 }
 
 enum BookingStatus {
   pending_payment
-  charter_requested
   confirmed
-  ticketed
   cancelled
   failed
 }
@@ -76,244 +59,135 @@ enum PaymentStatus {
   refunded
 }
 
-enum SegmentType {
-  flight
-  charter_leg
-  hotel
-  transfer
-}
-
-enum NotificationChannel {
-  whatsapp
-  sms
-  email
-}
-
-enum NotificationStatus {
-  queued
-  sent
-  delivered
-  failed
-}
-
-model Company {
-  id              String   @id @default(uuid())
-  name            String
-  type            CompanyType
-  billingCurrency String   @map("billing_currency")
-  createdAt       DateTime @default(now()) @map("created_at")
-
-  users    User[]
-  bookings Booking[]
-
-  @@map("companies")
-}
-
 model User {
   id        String   @id @default(uuid())
-  companyId String?  @map("company_id")
   email     String   @unique
   phone     String?
   firstName String   @map("first_name")
   lastName  String   @map("last_name")
-  role      UserRole @default(b2c)
-  kycStatus String   @default("unverified") @map("kyc_status")
+  role      UserRole @default(traveler)
+  operatorId String? @map("operator_id")
   createdAt DateTime @default(now()) @map("created_at")
 
-  company         Company?         @relation(fields: [companyId], references: [id])
-  loyaltyAccount  LoyaltyAccount?
-  bookings        Booking[]
-  notifications   NotificationLog[]
+  operator Operator? @relation(fields: [operatorId], references: [id])
+  bookings Booking[]
 
   @@map("users")
 }
 
-model LoyaltyAccount {
-  id             String      @id @default(uuid())
-  userId         String      @unique @map("user_id")
-  pointsBalance  Int         @default(0) @map("points_balance")
-  tier           LoyaltyTier @default(silver)
-  createdAt      DateTime    @default(now()) @map("created_at")
+/// A private/business jet operator that lists empty legs directly on the
+/// marketplace. `stripeConnectedAccountId` is set once the operator
+/// completes Stripe Connect onboarding, enabling payout on booking.
+model Operator {
+  id                       String   @id @default(uuid())
+  name                     String
+  contactEmail             String   @map("contact_email")
+  contactPhone             String?  @map("contact_phone")
+  certificateNumber        String?  @map("certificate_number")
+  verified                 Boolean  @default(false)
+  stripeConnectedAccountId String?  @map("stripe_connected_account_id")
+  createdAt                DateTime @default(now()) @map("created_at")
 
-  user    User                   @relation(fields: [userId], references: [id])
-  entries LoyaltyLedgerEntry[]
+  staff     User[]
+  emptyLegs EmptyLeg[]
 
-  @@map("loyalty_accounts")
+  @@map("operators")
 }
 
-model LoyaltyLedgerEntry {
-  id               String           @id @default(uuid())
-  loyaltyAccountId String           @map("loyalty_account_id")
-  bookingId        String?          @map("booking_id")
-  entryType        LoyaltyEntryType @map("entry_type")
-  source           String
-  points           Int
-  balanceAfter     Int              @map("balance_after")
-  notes            String?
-  createdAt        DateTime         @default(now()) @map("created_at")
+/// A cached, priced Business/First class fare returned from a provider
+/// search (Duffel/Amadeus/Sabre/Travelport/mock). Not authoritative
+/// inventory — it's a short-lived snapshot a Booking can reference for
+/// audit purposes; `expiresAt` mirrors the provider's own offer TTL.
+model Flight {
+  id             String               @id @default(uuid())
+  source         FlightProviderSource
+  sourceOfferId  String               @map("source_offer_id")
+  cabinClass     CabinClass           @map("cabin_class")
+  airline        String
+  origin         String
+  destination    String
+  departureAt    DateTime             @map("departure_at")
+  arrivalAt      DateTime             @map("arrival_at")
+  rawPayload     Json                 @map("raw_payload")
+  amount         Decimal
+  currency       String
+  seatsAvailable Int?                 @map("seats_available")
+  expiresAt      DateTime             @map("expires_at")
+  createdAt      DateTime             @default(now()) @map("created_at")
 
-  loyaltyAccount LoyaltyAccount @relation(fields: [loyaltyAccountId], references: [id])
-  booking        Booking?       @relation(fields: [bookingId], references: [id])
+  booking Booking?
 
-  @@index([loyaltyAccountId])
-  @@map("loyalty_ledger_entries")
+  @@index([origin, destination, departureAt])
+  @@map("flights")
 }
 
-model MarkupRule {
-  id           String          @id @default(uuid())
-  name         String
-  scopeType    MarkupScopeType @map("scope_type")
-  scopeValue   Json            @map("scope_value")
-  markupType   MarkupType      @map("markup_type")
-  markupValue  Decimal         @map("markup_value")
-  priority     Int             @default(0)
-  active       Boolean         @default(true)
-  validFrom    DateTime?       @map("valid_from")
-  validTo      DateTime?       @map("valid_to")
+/// A repositioning-flight listing with empty seats sold at a discount.
+/// Either entered directly by an Operator (`source = platform_listed`,
+/// `operatorId` set) or pulled from an external aggregator like Avinode
+/// or Jettly (`operatorId` may be null; `operatorName`/`sourceListingId`
+/// carry the vendor's own attribution).
+model EmptyLeg {
+  id              String                 @id @default(uuid())
+  operatorId      String?                @map("operator_id")
+  operatorName    String                 @map("operator_name")
+  source          EmptyLegProviderSource
+  sourceListingId String?                @map("source_listing_id")
+  aircraftType    String                 @map("aircraft_type")
+  origin          String
+  destination     String
+  departureAt     DateTime               @map("departure_at")
+  arrivalAt       DateTime               @map("arrival_at")
+  seatsAvailable  Int                    @map("seats_available")
+  amount          Decimal
+  currency        String
+  status          EmptyLegStatus         @default(available)
+  createdAt       DateTime               @default(now()) @map("created_at")
 
-  offers Offer[]
+  operator Operator? @relation(fields: [operatorId], references: [id])
+  booking  Booking?
 
-  @@index([scopeType, active, priority])
-  @@map("markup_rules")
+  @@index([origin, destination, departureAt])
+  @@index([status])
+  @@map("empty_legs")
 }
 
-model Offer {
-  id                  String     @id @default(uuid())
-  source              OfferSource
-  sourceOfferId       String     @map("source_offer_id")
-  offerType           OfferType  @map("offer_type")
-  rawPayload          Json       @map("raw_payload")
-  baseAmount          Decimal    @map("base_amount")
-  baseCurrency        String     @map("base_currency")
-  appliedMarkupRuleId String?    @map("applied_markup_rule_id")
-  finalAmount         Decimal    @map("final_amount")
-  finalCurrency       String     @map("final_currency")
-  expiresAt           DateTime   @map("expires_at")
-  createdAt           DateTime   @default(now()) @map("created_at")
-
-  appliedMarkupRule MarkupRule? @relation(fields: [appliedMarkupRuleId], references: [id])
-  booking           Booking?
-
-  @@map("offers")
-}
-
+/// References exactly one of `flightId` / `emptyLegId`, enforced at the
+/// application layer (BookingService) rather than in the schema, since
+/// Prisma has no native "exactly one of" constraint.
 model Booking {
-  id                 String        @id @default(uuid())
-  userId             String        @map("user_id")
-  companyId          String?       @map("company_id")
-  offerId            String        @unique @map("offer_id")
-  bookingType        OfferType     @map("booking_type")
-  status             BookingStatus @default(pending_payment)
-  confirmationNumber String?       @map("confirmation_number")
-  totalAmount        Decimal       @map("total_amount")
-  currency           String
-  paymentStatus      PaymentStatus @default(unpaid) @map("payment_status")
-  createdAt          DateTime      @default(now()) @map("created_at")
+  id            String        @id @default(uuid())
+  userId        String        @map("user_id")
+  bookingType   BookingType   @map("booking_type")
+  flightId      String?       @unique @map("flight_id")
+  emptyLegId    String?       @unique @map("empty_leg_id")
+  status        BookingStatus @default(pending_payment)
+  totalAmount   Decimal       @map("total_amount")
+  currency      String
+  paymentStatus PaymentStatus @default(unpaid) @map("payment_status")
+  createdAt     DateTime      @default(now()) @map("created_at")
 
-  user            User                   @relation(fields: [userId], references: [id])
-  company         Company?               @relation(fields: [companyId], references: [id])
-  offer           Offer                  @relation(fields: [offerId], references: [id])
-  segments        BookingSegment[]
-  passengers      Passenger[]
-  payments        Payment[]
-  notifications   NotificationLog[]
-  loyaltyEntries  LoyaltyLedgerEntry[]
-  hotelBooking    HotelBooking?
-  transferBooking TransferBooking?
+  user     User      @relation(fields: [userId], references: [id])
+  flight   Flight?   @relation(fields: [flightId], references: [id])
+  emptyLeg EmptyLeg? @relation(fields: [emptyLegId], references: [id])
+  payments Payment[]
 
   @@index([userId])
   @@index([status])
   @@map("bookings")
 }
 
-model BookingSegment {
-  id           String      @id @default(uuid())
-  bookingId    String      @map("booking_id")
-  segmentType  SegmentType @map("segment_type")
-  origin       String
-  destination  String
-  departureAt  DateTime    @map("departure_at")
-  arrivalAt    DateTime    @map("arrival_at")
-  details      Json
-
-  booking Booking @relation(fields: [bookingId], references: [id])
-
-  @@index([bookingId])
-  @@map("booking_segments")
-}
-
-model Passenger {
-  id             String    @id @default(uuid())
-  bookingId      String    @map("booking_id")
-  firstName      String    @map("first_name")
-  lastName       String    @map("last_name")
-  dateOfBirth    DateTime  @map("date_of_birth")
-  passportNumber String?   @map("passport_number")
-  nationality    String?
-
-  booking Booking @relation(fields: [bookingId], references: [id])
-
-  @@index([bookingId])
-  @@map("passengers")
-}
-
 model Payment {
-  id                     String        @id @default(uuid())
-  bookingId              String        @map("booking_id")
-  stripePaymentIntentId  String        @map("stripe_payment_intent_id")
-  connectedAccountId     String?       @map("connected_account_id")
-  amount                 Decimal
-  currency               String
-  platformFeeAmount      Decimal       @map("platform_fee_amount")
-  status                 PaymentStatus @default(unpaid)
-  createdAt              DateTime      @default(now()) @map("created_at")
+  id                    String        @id @default(uuid())
+  bookingId             String        @map("booking_id")
+  stripePaymentIntentId String        @map("stripe_payment_intent_id")
+  amount                Decimal
+  currency              String
+  platformFeeAmount     Decimal       @map("platform_fee_amount")
+  status                PaymentStatus @default(unpaid)
+  createdAt             DateTime      @default(now()) @map("created_at")
 
   booking Booking @relation(fields: [bookingId], references: [id])
 
   @@index([bookingId])
   @@map("payments")
-}
-
-model NotificationLog {
-  id        String              @id @default(uuid())
-  userId    String              @map("user_id")
-  bookingId String?             @map("booking_id")
-  channel   NotificationChannel
-  template  String
-  status    NotificationStatus  @default(queued)
-  sentAt    DateTime?           @map("sent_at")
-
-  user    User     @relation(fields: [userId], references: [id])
-  booking Booking? @relation(fields: [bookingId], references: [id])
-
-  @@index([userId])
-  @@map("notification_log")
-}
-
-model HotelBooking {
-  id        String   @id @default(uuid())
-  bookingId String   @unique @map("booking_id")
-  hotelName String   @map("hotel_name")
-  roomType  String   @map("room_type")
-  checkIn   DateTime @map("check_in")
-  checkOut  DateTime @map("check_out")
-  amount    Decimal
-
-  booking Booking @relation(fields: [bookingId], references: [id])
-
-  @@map("hotel_bookings")
-}
-
-model TransferBooking {
-  id              String   @id @default(uuid())
-  bookingId       String   @unique @map("booking_id")
-  vehicleType     String   @map("vehicle_type")
-  pickupLocation  String   @map("pickup_location")
-  dropoffLocation String   @map("dropoff_location")
-  pickupAt        DateTime @map("pickup_at")
-  amount          Decimal
-
-  booking Booking @relation(fields: [bookingId], references: [id])
-
-  @@map("transfer_bookings")
 }

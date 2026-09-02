@@ -1,11 +1,12 @@
 import { Module } from "@nestjs/common";
 import { BookingService } from "./booking.service";
+import { BookingController } from "./booking.controller";
 import { PrismaService } from "../../common/prisma/prisma.service";
-import { LoyaltyModule } from "../loyalty/loyalty.module";
 import { PaymentsModule } from "../payments/payments.module";
 
 @Module({
-  imports: [LoyaltyModule, PaymentsModule],
+  imports: [PaymentsModule],
+  controllers: [BookingController],
   providers: [BookingService, PrismaService],
   exports: [BookingService],
 })

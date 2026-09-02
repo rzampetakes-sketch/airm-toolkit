@@ -1,18 +1,18 @@
 import { Module } from "@nestjs/common";
-import { SearchModule } from "./modules/search/search.module";
-import { PricingModule } from "./modules/pricing/pricing.module";
+import { FlightsModule } from "./modules/flights/flights.module";
+import { EmptyLegsModule } from "./modules/empty-legs/empty-legs.module";
+import { OperatorsModule } from "./modules/operators/operators.module";
 import { BookingModule } from "./modules/booking/booking.module";
-import { LoyaltyModule } from "./modules/loyalty/loyalty.module";
 import { PaymentsModule } from "./modules/payments/payments.module";
 import { NotificationsModule } from "./modules/notifications/notifications.module";
 import { UsersModule } from "./modules/users/users.module";
 
 @Module({
   imports: [
-    SearchModule,
-    PricingModule,
+    FlightsModule,
+    EmptyLegsModule,
+    OperatorsModule,
     BookingModule,
-    LoyaltyModule,
     PaymentsModule,
     NotificationsModule,
     UsersModule,

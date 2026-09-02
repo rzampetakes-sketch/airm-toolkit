@@ -1,76 +1,78 @@
-export type OfferSource = "duffel" | "amadeus" | "sabre" | "avinode" | "empty_leg";
+// ---- Part 1: Business/First class flight search ----
 
-export type OfferType = "commercial_flight" | "private_jet_charter" | "empty_leg";
+export type FlightProviderSource = "duffel" | "amadeus" | "sabre" | "travelport" | "mock";
 
-export type CabinClass = "business" | "first" | "private";
+export type CabinClass = "business" | "first";
 
-export interface OfferSegment {
+export interface FlightSegment {
   origin: string;
   destination: string;
   departureAt: string;
   arrivalAt: string;
-  flightNumber?: string;
+  airline: string;
+  flightNumber: string;
   durationMinutes: number;
 }
 
-export interface AppliedMarkup {
-  ruleId: string;
-  type: "percentage" | "fixed";
-  value: number;
-  amount: number;
-}
-
 /**
- * The normalized shape every integration adapter (Duffel, Amadeus, Sabre,
- * Avinode, empty-leg feeds) maps its vendor response into. Search ranking,
- * the pricing engine, and the frontend only ever deal with this type —
- * never a vendor-specific payload.
+ * The normalized shape every commercial-fare provider (Duffel, Amadeus,
+ * Sabre, Travelport, or the mock provider) maps its response into.
+ * Ranking, the frontend, and the booking flow only ever deal with this
+ * type — never a vendor-specific payload.
  */
-export interface UnifiedFlightOffer {
+export interface FlightOffer {
   id: string;
-  source: OfferSource;
+  source: FlightProviderSource;
   sourceOfferId: string;
-  type: OfferType;
-  cabinClass?: CabinClass;
-  aircraftType?: string;
-  operatorName?: string;
-  segments: OfferSegment[];
-  baseAmount: number;
-  baseCurrency: string;
-  markup?: AppliedMarkup;
-  finalAmount: number;
-  finalCurrency: string;
+  cabinClass: CabinClass;
+  airline: string;
+  segments: FlightSegment[];
+  amount: number;
+  currency: string;
   seatsAvailable?: number;
   expiresAt: string;
 }
 
-export type MarkupScopeType =
-  | "route"
-  | "aircraft_type"
-  | "cabin_class"
-  | "customer_segment"
-  | "global";
+export interface FlightSearchParams {
+  origin: string;
+  destination: string;
+  departureDate: string;
+  returnDate?: string;
+  passengers: number;
+  cabinClass: CabinClass;
+}
 
-export type MarkupType = "percentage" | "fixed";
+// ---- Part 2: Private jet empty-leg marketplace ----
 
-export interface MarkupRule {
+export type EmptyLegProviderSource = "platform_listed" | "avinode" | "jettly" | "mock";
+
+export type EmptyLegStatus = "available" | "booked" | "expired" | "cancelled";
+
+/**
+ * The normalized shape for an empty-leg listing, whether it was entered
+ * directly by an Operator through the operator portal (`platform_listed`)
+ * or pulled from an external aggregator (Avinode, Jettly, ...).
+ */
+export interface EmptyLegListing {
   id: string;
-  name: string;
-  scopeType: MarkupScopeType;
-  scopeValue: Record<string, string>;
-  markupType: MarkupType;
-  markupValue: number;
-  priority: number;
-  active: boolean;
-  validFrom?: string;
-  validTo?: string;
+  source: EmptyLegProviderSource;
+  sourceListingId?: string;
+  operatorId?: string;
+  operatorName: string;
+  aircraftType: string;
+  origin: string;
+  destination: string;
+  departureAt: string;
+  arrivalAt: string;
+  seatsAvailable: number;
+  amount: number;
+  currency: string;
+  status: EmptyLegStatus;
 }
 
-export interface PricingContext {
-  route: { origin: string; destination: string };
-  aircraftType?: string;
-  cabinClass?: CabinClass;
-  customerSegment?: string;
+export interface EmptyLegSearchParams {
+  origin?: string;
+  destination?: string;
+  earliestDeparture: string;
+  latestDeparture: string;
 }
-
-export type LoyaltyEntryType = "earn" | "redeem" | "adjust" | "expire";

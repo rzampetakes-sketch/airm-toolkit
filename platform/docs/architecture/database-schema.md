@@ -1,191 +1,129 @@
 # Database Schema (ERD)
 
 PostgreSQL, modeled with Prisma (`apps/api/prisma/schema.prisma` is the
-source of truth — this doc is the human-readable view of it).
+source of truth). Five core entities as requested — `User`, `Booking`,
+`Flight`, `EmptyLeg`, `Operator` — plus `Payment`, which any booking flow
+needs.
 
 ```mermaid
 erDiagram
-    COMPANY ||--o{ USER : employs
-    USER ||--|| LOYALTY_ACCOUNT : has
-    LOYALTY_ACCOUNT ||--o{ LOYALTY_LEDGER_ENTRY : records
+    OPERATOR ||--o{ USER : "employs (operator staff logins)"
+    OPERATOR ||--o{ EMPTY_LEG : lists
     USER ||--o{ BOOKING : places
-    COMPANY ||--o{ BOOKING : "places (B2B)"
-    OFFER ||--o| BOOKING : "becomes"
-    MARKUP_RULE ||--o{ OFFER : "applied to"
-    BOOKING ||--o{ BOOKING_SEGMENT : contains
-    BOOKING ||--o{ PASSENGER : carries
+    FLIGHT ||--o| BOOKING : "booked as"
+    EMPTY_LEG ||--o| BOOKING : "booked as"
     BOOKING ||--o{ PAYMENT : "paid by"
-    BOOKING ||--o{ NOTIFICATION_LOG : triggers
-    BOOKING ||--o{ LOYALTY_LEDGER_ENTRY : "earns/redeems via"
-    BOOKING ||--o| HOTEL_BOOKING : "add-on"
-    BOOKING ||--o| TRANSFER_BOOKING : "add-on"
-
-    COMPANY {
-        uuid id PK
-        string name
-        string type "b2b_agency|corporate"
-        string billing_currency
-        timestamp created_at
-    }
 
     USER {
         uuid id PK
-        uuid company_id FK "nullable"
         string email
         string phone
         string first_name
         string last_name
-        string role "b2c|b2b_agent|admin|ops"
-        string kyc_status
+        string role "traveler|operator|admin"
+        uuid operator_id FK "nullable — set for operator staff logins"
         timestamp created_at
     }
 
-    LOYALTY_ACCOUNT {
-        uuid id PK
-        uuid user_id FK
-        int points_balance
-        string tier "silver|gold|platinum|black"
-        timestamp created_at
-    }
-
-    LOYALTY_LEDGER_ENTRY {
-        uuid id PK
-        uuid loyalty_account_id FK
-        uuid booking_id FK "nullable"
-        string entry_type "earn|redeem|adjust|expire"
-        string source "commercial_flight|private_jet_charter|empty_leg|promo"
-        int points
-        int balance_after
-        string notes
-        timestamp created_at
-    }
-
-    MARKUP_RULE {
+    OPERATOR {
         uuid id PK
         string name
-        string scope_type "route|aircraft_type|cabin_class|customer_segment|global"
-        jsonb scope_value
-        string markup_type "percentage|fixed"
-        decimal markup_value
-        int priority
-        boolean active
-        timestamp valid_from
-        timestamp valid_to
+        string contact_email
+        string contact_phone
+        string certificate_number "Part 135 / ARGUS / IS-BAO ref"
+        boolean verified
+        string stripe_connected_account_id "nullable, set after Connect onboarding"
+        timestamp created_at
     }
 
-    OFFER {
+    FLIGHT {
         uuid id PK
-        string source "duffel|amadeus|sabre|avinode|empty_leg"
+        string source "duffel|amadeus|sabre|travelport|mock"
         string source_offer_id
-        string offer_type "commercial_flight|private_jet_charter|empty_leg"
+        string cabin_class "business|first"
+        string airline
+        string origin
+        string destination
+        timestamp departure_at
+        timestamp arrival_at
         jsonb raw_payload
-        decimal base_amount
-        string base_currency
-        uuid applied_markup_rule_id FK "nullable"
-        decimal final_amount
-        string final_currency
+        decimal amount
+        string currency
+        int seats_available
         timestamp expires_at
+        timestamp created_at
+    }
+
+    EMPTY_LEG {
+        uuid id PK
+        uuid operator_id FK "nullable — null for external-aggregator listings"
+        string operator_name
+        string source "platform_listed|avinode|jettly|mock"
+        string source_listing_id "nullable"
+        string aircraft_type
+        string origin
+        string destination
+        timestamp departure_at
+        timestamp arrival_at
+        int seats_available
+        decimal amount
+        string currency
+        string status "available|booked|expired|cancelled"
         timestamp created_at
     }
 
     BOOKING {
         uuid id PK
         uuid user_id FK
-        uuid company_id FK "nullable"
-        uuid offer_id FK
-        string booking_type "commercial_flight|private_jet_charter|empty_leg"
-        string status "pending_payment|charter_requested|confirmed|ticketed|cancelled|failed"
-        string confirmation_number
+        string booking_type "flight|empty_leg"
+        uuid flight_id FK "nullable, unique — set when booking_type=flight"
+        uuid empty_leg_id FK "nullable, unique — set when booking_type=empty_leg"
+        string status "pending_payment|confirmed|cancelled|failed"
         decimal total_amount
         string currency
         string payment_status "unpaid|authorized|captured|refunded"
         timestamp created_at
     }
 
-    BOOKING_SEGMENT {
-        uuid id PK
-        uuid booking_id FK
-        string segment_type "flight|charter_leg|hotel|transfer"
-        string origin
-        string destination
-        timestamp departure_at
-        timestamp arrival_at
-        jsonb details
-    }
-
-    PASSENGER {
-        uuid id PK
-        uuid booking_id FK
-        string first_name
-        string last_name
-        date date_of_birth
-        string passport_number
-        string nationality
-    }
-
     PAYMENT {
         uuid id PK
         uuid booking_id FK
         string stripe_payment_intent_id
-        string connected_account_id "nullable, Stripe Connect operator payout"
         decimal amount
         string currency
         decimal platform_fee_amount
-        string status "requires_payment|authorized|captured|refunded|failed"
+        string status
         timestamp created_at
-    }
-
-    NOTIFICATION_LOG {
-        uuid id PK
-        uuid user_id FK
-        uuid booking_id FK "nullable"
-        string channel "whatsapp|sms|email"
-        string template
-        string status "queued|sent|delivered|failed"
-        timestamp sent_at
-    }
-
-    HOTEL_BOOKING {
-        uuid id PK
-        uuid booking_id FK
-        string hotel_name
-        string room_type
-        date check_in
-        date check_out
-        decimal amount
-    }
-
-    TRANSFER_BOOKING {
-        uuid id PK
-        uuid booking_id FK
-        string vehicle_type
-        string pickup_location
-        string dropoff_location
-        timestamp pickup_at
-        decimal amount
     }
 ```
 
 ## Notes on the design
 
-- **`OFFER` is immutable and cached, not authoritative inventory.** It's a
-  priced snapshot returned from search, with a short `expires_at`. A
-  `BOOKING` references the `OFFER` it was created from so pricing/markup
-  is always auditable after the fact, even if the rule changes later.
-- **`LOYALTY_LEDGER_ENTRY` stores a running `balance_after`** on every row
-  (append-only, never update/delete) so the wallet balance is always
-  reconstructable and auditable — this is the same pattern used for
-  financial ledgers. `LOYALTY_ACCOUNT.points_balance` is a denormalized
-  cache of the latest `balance_after`, updated in the same DB transaction.
-- **`MARKUP_RULE.scope_value` is JSONB** because scope shape differs by
-  `scope_type` (a route rule needs `{origin, destination}`; an aircraft
-  rule needs `{aircraftType}`; a segment rule needs `{customerSegment}`).
-  Rules are evaluated in `priority` order and the pricing engine documents
-  which one won on the `OFFER` row.
-- **B2B vs B2C** is not a separate schema — `COMPANY` is nullable on both
-  `USER` and `BOOKING`. A B2C consumer has `company_id = null`; a travel
-  agent booking on behalf of a client has `company_id` set and the actual
-  traveler goes in `PASSENGER`.
-- Payment sits on its own table (not embedded in `BOOKING`) because a
-  booking can have multiple payment attempts (failed → retried) and, for
-  charter with a connected operator, potentially split disbursement.
+- **`Booking` references exactly one of `flightId` / `emptyLegId`.**
+  Prisma has no native "exactly one of two nullable FKs" constraint, so
+  this is enforced in `BookingService` (`bookFlight` vs. `bookEmptyLeg`
+  are separate methods, each setting only their own FK) rather than in
+  the schema. If you outgrow two booking types, revisit this as a
+  polymorphic `bookable_type`/`bookable_id` pair.
+- **`Flight` is a cache, not authoritative inventory.** It's the priced
+  snapshot returned from a provider search, with the provider's own
+  `expiresAt` copied over — `BookingService.bookFlight` refuses to book
+  an expired one. This is why `Flight` has a `rawPayload` JSONB column:
+  it preserves exactly what the provider returned for later audit/dispute
+  handling, even after the provider's own offer has expired.
+- **`EmptyLeg` is a real table you own, not just a cache** — unlike
+  `Flight`, this is authoritative inventory for `platform_listed` rows
+  (an Operator's own listing lives here permanently, not just for the
+  duration of a search). Its `status` transitions
+  `available → booked` inside the same DB transaction that creates the
+  `Booking`, closing the double-booking race condition.
+- **`Operator.stripeConnectedAccountId` is nullable** because an
+  operator can register and list flights before completing Stripe
+  Connect onboarding; `PaymentsService` only attempts a split payout once
+  it's set, otherwise the platform simply collects the full amount (settle
+  with the operator out-of-band until then).
+- **No loyalty/markup/B2B tables in this schema.** Those were part of an
+  earlier, broader "VIP travel platform" concept for this same repo. This
+  brief is scoped to exactly the two products described, so those tables
+  were removed rather than left half-wired; add them back deliberately if
+  a future brief asks for dynamic pricing or a loyalty program again.

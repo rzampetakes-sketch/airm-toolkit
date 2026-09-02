@@ -1,31 +1,20 @@
 import { Injectable } from "@nestjs/common";
-import { PrismaService } from "../../common/prisma/prisma.service";
 import { TwilioAdapter } from "../integrations/twilio/twilio.adapter";
 
 /**
- * TODO: back this with a BullMQ queue (`notifications` queue) so
- * WhatsApp/SMS/email sends are retried on transient failure and never
- * block the booking request/response cycle. This stub sends inline.
+ * Not part of the current two-part MVP scope (business-class search +
+ * empty-leg marketplace) beyond a basic booking confirmation, but kept
+ * as its own module/adapter seam since every booking flow ends up
+ * needing at least a confirmation message.
+ *
+ * TODO: back this with a BullMQ queue so sends are retried on transient
+ * failure and never block the booking request/response cycle.
  */
 @Injectable()
 export class NotificationsService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly twilioAdapter: TwilioAdapter,
-  ) {}
+  constructor(private readonly twilioAdapter: TwilioAdapter) {}
 
-  async sendBookingConfirmation(userId: string, bookingId: string, phone: string) {
-    await this.twilioAdapter.send("whatsapp", phone, "Your booking is confirmed. Your e-ticket will follow shortly.");
-
-    return this.prisma.notificationLog.create({
-      data: {
-        userId,
-        bookingId,
-        channel: "whatsapp",
-        template: "booking_confirmation",
-        status: "sent",
-        sentAt: new Date(),
-      },
-    });
+  sendBookingConfirmation(phone: string) {
+    return this.twilioAdapter.send("whatsapp", phone, "Your booking is confirmed. Your e-ticket will follow shortly.");
   }
 }

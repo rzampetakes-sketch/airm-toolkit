@@ -1,13 +1,11 @@
 # Admin Ops Console (Phase 2)
 
-Internal Next.js app for ops/pricing teams:
+Internal Next.js app for the platform team:
 
-- CRUD on `MarkupRule` (route/aircraft/cabin/segment scoping, priority,
-  validity window) — see `apps/api/src/modules/pricing`.
-- Loyalty tier management and manual ledger adjustments — see
-  `apps/api/src/modules/loyalty`.
-- Charter RFQ queue: view/action pending `charter_requested` bookings.
-- Booking + payment reconciliation views.
+- Verify/approve Operators (`Operator.verified`) before their listings
+  go live, to keep the empty-leg marketplace trustworthy.
+- Moderate/expire stale `EmptyLeg` listings.
+- Booking + payment reconciliation views across both products.
 
 Not scaffolded yet — build after `apps/web` and `apps/api` MVP flows are
 working end-to-end. Reuses `@travel-platform/ui` and `@travel-platform/types`.

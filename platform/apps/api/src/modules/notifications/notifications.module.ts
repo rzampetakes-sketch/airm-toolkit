@@ -1,10 +1,9 @@
 import { Module } from "@nestjs/common";
 import { NotificationsService } from "./notifications.service";
 import { TwilioAdapter } from "../integrations/twilio/twilio.adapter";
-import { PrismaService } from "../../common/prisma/prisma.service";
 
 @Module({
-  providers: [NotificationsService, TwilioAdapter, PrismaService],
+  providers: [NotificationsService, TwilioAdapter],
   exports: [NotificationsService],
 })
 export class NotificationsModule {}
