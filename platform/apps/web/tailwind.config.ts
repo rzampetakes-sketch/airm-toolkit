@@ -5,13 +5,17 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Luxury palette: deep charcoal + gold accent.
-        charcoal: "#0d0d0d",
-        gold: "#c9a86a",
+        // Dashboard/concierge palette: near-black charcoal, petrol teal
+        // structural accent, orange as the sole CTA/highlight color.
+        charcoal: "#0a0d0d",
+        panel: "#12181a",
+        teal: "#1f9d8a",
+        "teal-glow": "#0f2a27",
+        orange: "#f97316",
       },
       fontFamily: {
-        display: ["'Playfair Display'", "serif"],
-        body: ["'Inter'", "sans-serif"],
+        display: ["var(--font-space-grotesk)", "sans-serif"],
+        body: ["var(--font-inter)", "sans-serif"],
       },
     },
   },
