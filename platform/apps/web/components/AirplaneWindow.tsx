@@ -31,11 +31,13 @@ interface AirplaneWindowProps {
   eyebrow: string;
   title: string;
   lines: string[];
-  href: string;
   cta: string;
+  /** Navigates directly. Mutually exclusive with onSelect (e.g. TravelModeFlow's in-page slide). */
+  href?: string;
+  onSelect?: () => void;
 }
 
-export function AirplaneWindow({ variant, eyebrow, title, lines, href, cta }: AirplaneWindowProps) {
+export function AirplaneWindow({ variant, eyebrow, title, lines, href, cta, onSelect }: AirplaneWindowProps) {
   return (
     <div className="relative">
       <div
@@ -64,12 +66,22 @@ export function AirplaneWindow({ variant, eyebrow, title, lines, href, cta }: Ai
               <p key={line}>{line}</p>
             ))}
           </div>
-          <Link
-            href={href}
-            className="mt-5 inline-block rounded-lg border border-white/70 px-5 py-2.5 text-xs font-medium text-white backdrop-blur-sm transition hover:bg-white hover:text-charcoal sm:text-sm"
-          >
-            {cta}
-          </Link>
+          {onSelect ? (
+            <button
+              type="button"
+              onClick={onSelect}
+              className="mt-5 inline-block rounded-lg border border-white/70 px-5 py-2.5 text-xs font-medium text-white backdrop-blur-sm transition hover:bg-white hover:text-charcoal sm:text-sm"
+            >
+              {cta}
+            </button>
+          ) : (
+            <Link
+              href={href ?? "#"}
+              className="mt-5 inline-block rounded-lg border border-white/70 px-5 py-2.5 text-xs font-medium text-white backdrop-blur-sm transition hover:bg-white hover:text-charcoal sm:text-sm"
+            >
+              {cta}
+            </Link>
+          )}
         </div>
 
         <div className="pointer-events-none absolute inset-0 rounded-full bg-gradient-to-br from-white/15 via-transparent to-transparent" />
