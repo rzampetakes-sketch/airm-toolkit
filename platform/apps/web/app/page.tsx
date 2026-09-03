@@ -10,44 +10,37 @@ const NAV_LINKS = [
 
 export default function HomePage() {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-night text-cream">
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ background: "radial-gradient(ellipse 80% 50% at 50% 0%, rgba(92,21,38,0.55), transparent 70%)" }}
-      />
-
-      <header className="relative mx-auto flex max-w-6xl items-center justify-between px-6 py-8">
-        <div className="font-display text-2xl font-semibold tracking-wide text-cream">Aeros</div>
+    <main className="min-h-screen bg-paper text-charcoal">
+      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-8">
+        <div className="font-display text-2xl font-semibold tracking-wide text-charcoal">Aeros</div>
         <nav className="hidden items-center gap-8 text-sm md:flex">
           {NAV_LINKS.map((link) =>
             link.enabled ? (
-              <Link key={link.label} href={link.href} className="border-b border-gold pb-1 text-cream">
+              <Link key={link.label} href={link.href} className="border-b border-azure pb-1 text-charcoal">
                 {link.label}
               </Link>
             ) : (
-              <span key={link.label} className="cursor-default text-cream/45">
+              <span key={link.label} className="cursor-default text-charcoal/35">
                 {link.label}
               </span>
             ),
           )}
         </nav>
         <div className="flex items-center gap-4 text-sm">
-          <span className="cursor-default text-cream/70">Log in</span>
-          <span className="cursor-default rounded-lg border border-cream/40 px-5 py-2 font-medium text-cream opacity-80">
-            Sign up
-          </span>
+          <span className="cursor-default text-charcoal/60">Log in</span>
+          <span className="cursor-default rounded-lg bg-azure px-5 py-2 font-medium text-white opacity-90">Sign up</span>
         </div>
       </header>
 
-      <section className="relative mx-auto max-w-3xl px-6 pb-10 pt-6 text-center">
-        <h1 className="font-display text-5xl font-semibold leading-tight text-cream md:text-6xl">
+      <section className="mx-auto max-w-3xl px-6 pb-10 pt-6 text-center">
+        <h1 className="font-display text-5xl font-semibold leading-tight text-charcoal md:text-6xl">
           Book your next business trip
         </h1>
-        <p className="mt-4 text-lg text-cream/70">Choose how you want to travel</p>
-        <div className="mx-auto mt-4 h-6 w-px bg-gold" />
+        <p className="mt-4 text-lg text-charcoal/60">Choose how you want to travel</p>
+        <div className="mx-auto mt-4 h-6 w-px bg-azure" />
       </section>
 
-      <section className="relative mx-auto grid max-w-5xl grid-cols-1 gap-10 px-6 pb-24 sm:grid-cols-2">
+      <section className="mx-auto grid max-w-5xl grid-cols-1 gap-10 px-6 pb-24 sm:grid-cols-2">
         <AirplaneWindow
           variant="day"
           eyebrow="Commercial Flights"

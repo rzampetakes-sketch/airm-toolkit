@@ -33,30 +33,30 @@ export function AirplaneWindow({ variant, eyebrow, title, lines, href, cta }: Ai
     <div className="relative">
       <div
         className="absolute -inset-10 -z-10 rounded-full blur-3xl"
-        style={{ background: variant === "day" ? "rgba(111,168,214,0.35)" : "rgba(169,131,74,0.25)" }}
+        style={{ background: variant === "day" ? "rgba(77,132,184,0.3)" : "rgba(31,41,51,0.18)" }}
       />
       <div
-        className="relative aspect-[4/5] w-full overflow-hidden shadow-2xl ring-1 ring-white/10"
+        className="relative aspect-[4/5] w-full overflow-hidden shadow-xl ring-1 ring-charcoal/10"
         style={{ borderRadius: WINDOW_RADIUS }}
       >
         {variant === "day" ? <DayScene /> : <NightScene />}
 
         <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/5 to-black/20" />
 
-        <div className="relative flex h-full flex-col items-start px-8 pt-10 sm:px-10">
-          <span className="inline-flex items-center gap-2 rounded-full border border-cream/30 bg-black/25 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-cream backdrop-blur-sm">
+        <div className="absolute inset-0 flex flex-col items-start px-8 pt-10 sm:px-10">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-black/25 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-white backdrop-blur-sm">
             <PlaneIcon variant={variant} />
             {eyebrow}
           </span>
-          <h2 className="mt-6 font-display text-3xl font-semibold text-cream drop-shadow-sm sm:text-4xl">{title}</h2>
-          <div className="mt-3 space-y-1 text-sm text-cream/85">
+          <h2 className="mt-6 font-display text-3xl font-semibold text-white drop-shadow-sm sm:text-4xl">{title}</h2>
+          <div className="mt-3 space-y-1 text-sm text-white/85">
             {lines.map((line) => (
               <p key={line}>{line}</p>
             ))}
           </div>
           <Link
             href={href}
-            className="mt-8 inline-block rounded-lg border border-cream/70 px-6 py-3 text-sm font-medium text-cream backdrop-blur-sm transition hover:bg-cream hover:text-burgundy"
+            className="mt-8 inline-block rounded-lg border border-white/70 px-6 py-3 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white hover:text-charcoal"
           >
             {cta}
           </Link>
@@ -103,7 +103,7 @@ function DayScene() {
 
 function NightScene() {
   return (
-    <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, #0b0407 0%, #2a0f16 55%, #5c1526 100%)" }}>
+    <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, #0b0e14 0%, #1c2733 55%, #33475c 100%)" }}>
       {STARS.map((star, index) => (
         <div
           key={index}
@@ -113,15 +113,15 @@ function NightScene() {
       ))}
       <div
         className="absolute bottom-0 left-0 h-28 w-full"
-        style={{ background: "linear-gradient(180deg, rgba(169,131,74,0) 0%, rgba(169,131,74,0.4) 100%)" }}
+        style={{ background: "linear-gradient(180deg, rgba(234,243,250,0) 0%, rgba(234,243,250,0.3) 100%)" }}
       />
       <div className="absolute bottom-14 left-1/2 flex -translate-x-1/2 gap-3">
         {Array.from({ length: 7 }).map((_, index) => (
-          <div key={index} className="h-1 w-1 rounded-full bg-gold" style={{ opacity: 1 - index * 0.1 }} />
+          <div key={index} className="h-1 w-1 rounded-full bg-white" style={{ opacity: 1 - index * 0.1 }} />
         ))}
       </div>
       <svg viewBox="0 0 200 60" className="absolute bottom-16 left-1/2 w-4/5 -translate-x-1/2 opacity-90">
-        <path d="M10 42 L70 40 L95 18 L104 18 L100 40 L150 40 L165 34 L172 36 L162 44 L20 46 Z" fill="#0b0407" />
+        <path d="M10 42 L70 40 L95 18 L104 18 L100 40 L150 40 L165 34 L172 36 L162 44 L20 46 Z" fill="#0b0e14" />
       </svg>
     </div>
   );

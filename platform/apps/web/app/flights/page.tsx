@@ -28,16 +28,16 @@ export default function FlightsSearchPage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-3xl px-6 py-10">
-      <Link href="/" className="text-sm text-gold underline underline-offset-4">
+      <Link href="/" className="text-sm text-azure underline underline-offset-4">
         &larr; Back home
       </Link>
 
       <div className="mt-6 text-center">
-        <p className="mb-2 text-xs font-medium uppercase tracking-[0.25em] text-gold">Commercial Flights</p>
-        <h1 className="font-display text-4xl font-semibold text-cream">Search Business &amp; First Class</h1>
+        <p className="mb-2 text-xs font-medium uppercase tracking-[0.25em] text-azure">Commercial Flights</p>
+        <h1 className="font-display text-4xl font-semibold text-charcoal">Search Business &amp; First Class</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="mx-auto mt-8 rounded-2xl border border-gold/25 bg-panel p-8 shadow-sm">
+      <form onSubmit={handleSubmit} className="mx-auto mt-8 rounded-2xl border border-charcoal/10 bg-panel p-8 shadow-sm">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <Field label="From">
             <input value={origin} onChange={(e) => setOrigin(e.target.value.toUpperCase())} className="input" maxLength={3} />
@@ -54,7 +54,7 @@ export default function FlightsSearchPage() {
         </div>
 
         <div className="mt-6">
-          <p className="mb-2 text-xs uppercase tracking-wide text-cream/50">Cabin</p>
+          <p className="mb-2 text-xs uppercase tracking-wide text-charcoal/50">Cabin</p>
           <div className="flex gap-2">
             {(["business", "first"] as const).map((option) => (
               <button
@@ -62,7 +62,7 @@ export default function FlightsSearchPage() {
                 type="button"
                 onClick={() => setCabinClass(option)}
                 className={`rounded-full px-5 py-2 text-sm font-medium capitalize transition ${
-                  cabinClass === option ? "bg-gold text-ink" : "border border-cream/20 text-cream/60"
+                  cabinClass === option ? "bg-azure text-white" : "border border-charcoal/15 text-charcoal/60"
                 }`}
               >
                 {option}
@@ -73,7 +73,7 @@ export default function FlightsSearchPage() {
 
         <button
           type="submit"
-          className="mt-8 w-full rounded-lg bg-burgundy py-4 font-display text-lg font-semibold text-cream shadow-sm transition hover:bg-burgundy-dark"
+          className="mt-8 w-full rounded-lg bg-azure py-4 font-display text-lg font-semibold text-white shadow-sm transition hover:opacity-90"
         >
           Search Flights
         </button>
@@ -85,7 +85,7 @@ export default function FlightsSearchPage() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-xs uppercase tracking-wide text-cream/50">{label}</span>
+      <span className="mb-2 block text-xs uppercase tracking-wide text-charcoal/50">{label}</span>
       {children}
     </label>
   );

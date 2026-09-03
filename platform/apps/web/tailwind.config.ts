@@ -1,22 +1,18 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  content: ["./app/**/*.{ts,tsx}", "../../packages/ui/src/**/*.{ts,tsx}"],
+  content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "../../packages/ui/src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        // Boutique concierge palette, dark mode throughout the whole
-        // platform (matches the homepage's airplane-window hero): deep
-        // near-black burgundy background, cream text, muted brass/gold
-        // reserved for accents and premium details.
-        night: "#12070c",
-        panel: "#1e0f16",
-        cream: "#f7f0e3",
-        "cream-deep": "#efe1c8",
-        burgundy: "#5c1526",
-        "burgundy-dark": "#3d0e1a",
-        gold: "#a9834a",
-        ink: "#2a1c1a",
+        // Light palette taken directly from the reference photo: pale
+        // blue-white page background, white cards/UI, azure blue as the
+        // one accent color (from the window's day-sky scene).
+        paper: "#f4f7fb",
+        panel: "#ffffff",
+        azure: "#4d84b8",
+        "azure-light": "#eaf3fa",
+        charcoal: "#1f2933",
       },
       fontFamily: {
         display: ["var(--font-cormorant)", "serif"],

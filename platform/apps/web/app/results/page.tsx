@@ -79,23 +79,23 @@ function ResultsContent() {
     <PageShell>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="font-display text-3xl font-semibold text-cream">
+          <h1 className="font-display text-3xl font-semibold text-charcoal">
             {type === "flight" ? "Available Fares" : "Available Empty Legs"}
           </h1>
-          <p className="mt-1 text-sm text-cream/55">
+          <p className="mt-1 text-sm text-charcoal/55">
             {searchParams.get("origin")} &rarr; {searchParams.get("destination")}
           </p>
         </div>
-        <a href="/" className="text-sm text-gold underline underline-offset-4">
+        <a href="/" className="text-sm text-azure underline underline-offset-4">
           &larr; New search
         </a>
       </div>
 
       {error && (
-        <div className="mb-6 rounded-lg border border-gold/30 bg-panel px-4 py-3 text-sm text-cream">{error}</div>
+        <div className="mb-6 rounded-lg border border-azure/25 bg-panel px-4 py-3 text-sm text-charcoal shadow-sm">{error}</div>
       )}
 
-      {loading && !error && <p className="text-cream/50">Searching…</p>}
+      {loading && !error && <p className="text-charcoal/50">Searching…</p>}
 
       {type === "flight" && flights && (
         <div className="flex flex-col gap-4">
@@ -128,25 +128,25 @@ function FlightRow({ offer, onSelect, selecting }: { offer: FlightOffer; onSelec
   const last = offer.segments[offer.segments.length - 1];
 
   return (
-    <div className="flex items-center gap-6 rounded-xl border border-gold/25 bg-panel p-6">
-      <div className="flex h-11 w-11 items-center justify-center rounded-full border border-gold/40 font-display text-sm font-semibold text-gold">
+    <div className="flex items-center gap-6 rounded-xl border border-charcoal/10 bg-panel p-6 shadow-sm">
+      <div className="flex h-11 w-11 items-center justify-center rounded-full border border-azure/40 font-display text-sm font-semibold text-azure">
         {offer.airline.slice(0, 2).toUpperCase()}
       </div>
       <div className="flex-1">
-        <p className="font-medium text-cream">{offer.airline}</p>
-        <p className="text-sm text-cream/55">
+        <p className="font-medium text-charcoal">{offer.airline}</p>
+        <p className="text-sm text-charcoal/55">
           {first.origin} &rarr; {last.destination} &middot; {Math.round(first.durationMinutes / 60)}h {first.durationMinutes % 60}m
         </p>
       </div>
-      <span className="rounded-full bg-gold/15 px-3 py-1 text-xs font-medium capitalize text-gold">{offer.cabinClass}</span>
-      <p className="font-display text-2xl font-semibold text-cream">
+      <span className="rounded-full bg-azure-light px-3 py-1 text-xs font-medium capitalize text-azure">{offer.cabinClass}</span>
+      <p className="font-display text-2xl font-semibold text-charcoal">
         {offer.amount.toLocaleString(undefined, { style: "currency", currency: offer.currency, maximumFractionDigits: 0 })}
       </p>
       <button
         type="button"
         onClick={onSelect}
         disabled={selecting}
-        className="rounded-lg bg-burgundy px-6 py-3 text-sm font-medium text-cream transition hover:bg-burgundy-dark disabled:opacity-50"
+        className="rounded-lg bg-azure px-6 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
       >
         {selecting ? "Selecting…" : "Select"}
       </button>
@@ -164,23 +164,23 @@ function EmptyLegRow({
   selecting: boolean;
 }) {
   return (
-    <div className="flex items-center gap-6 rounded-xl border border-gold/25 bg-panel p-6">
+    <div className="flex items-center gap-6 rounded-xl border border-charcoal/10 bg-panel p-6 shadow-sm">
       <div className="flex-1">
-        <p className="font-medium text-cream">
+        <p className="font-medium text-charcoal">
           {listing.aircraftType} &middot; {listing.operatorName}
         </p>
-        <p className="text-sm text-cream/55">
+        <p className="text-sm text-charcoal/55">
           {listing.origin} &rarr; {listing.destination}
         </p>
       </div>
-      <p className="font-display text-2xl font-semibold text-cream">
+      <p className="font-display text-2xl font-semibold text-charcoal">
         {listing.amount.toLocaleString(undefined, { style: "currency", currency: listing.currency, maximumFractionDigits: 0 })}
       </p>
       <button
         type="button"
         onClick={onSelect}
         disabled={selecting}
-        className="rounded-lg bg-burgundy px-6 py-3 text-sm font-medium text-cream transition hover:bg-burgundy-dark disabled:opacity-50"
+        className="rounded-lg bg-azure px-6 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
       >
         {selecting ? "Selecting…" : "Select"}
       </button>
@@ -189,7 +189,7 @@ function EmptyLegRow({
 }
 
 function EmptyState() {
-  return <p className="rounded-xl border border-dashed border-cream/15 p-10 text-center text-cream/50">No results for this search.</p>;
+  return <p className="rounded-xl border border-dashed border-charcoal/15 p-10 text-center text-charcoal/50">No results for this search.</p>;
 }
 
 function PageShell({ children }: { children: React.ReactNode }) {

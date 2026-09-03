@@ -2,14 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer components {
-  .input {
-    @apply w-full rounded-lg border border-cream/20 bg-night px-4 py-3 text-cream outline-none transition placeholder:text-cream/30 focus:border-gold;
-  }
+/*
+ * Written as plain CSS rather than @apply: Tailwind's @apply can only
+ * reference utility classes its content-scanner has already detected in
+ * .tsx files, so an opacity-modified custom-color class used only here
+ * (never a plain "text-charcoal/30" literal in a scanned file) fails
+ * with "the class does not exist" — a real build break found by
+ * actually running the dev server, not something @apply just warns about.
+ */
+.input {
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(31, 41, 51, 0.15);
+  background-color: #ffffff;
+  padding: 0.75rem 1rem;
+  color: #1f2933;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.input::placeholder {
+  color: rgba(31, 41, 51, 0.3);
+}
+.input:focus {
+  border-color: #4d84b8;
 }
 
 body {
-  background-color: #12070c;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.66  0 0 0 0 0.51  0 0 0 0 0.29  0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-color: #f4f7fb;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.3  0 0 0 0 0.52  0 0 0 0 0.72  0 0 0 0.02 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-repeat: repeat;
 }

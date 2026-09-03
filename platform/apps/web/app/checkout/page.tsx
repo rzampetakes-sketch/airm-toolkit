@@ -129,9 +129,9 @@ function CheckoutContent() {
   if (paid) {
     return (
       <PageShell>
-        <div className="mx-auto max-w-lg rounded-2xl border border-gold/30 bg-panel p-10 text-center">
-          <p className="font-display text-3xl font-semibold text-cream">Booking Confirmed</p>
-          <p className="mt-3 text-cream/60">Confirmation reference {booking.id.slice(0, 8).toUpperCase()}</p>
+        <div className="mx-auto max-w-lg rounded-2xl border border-azure/25 bg-panel p-10 text-center shadow-sm">
+          <p className="font-display text-3xl font-semibold text-charcoal">Booking Confirmed</p>
+          <p className="mt-3 text-charcoal/60">Confirmation reference {booking.id.slice(0, 8).toUpperCase()}</p>
         </div>
       </PageShell>
     );
@@ -142,19 +142,19 @@ function CheckoutContent() {
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_360px]">
         <div className="flex flex-col gap-8">
           <div>
-            <h1 className="font-display text-3xl font-semibold text-cream">Complete Your Booking</h1>
-            <p className="mt-1 text-sm text-cream/55">
+            <h1 className="font-display text-3xl font-semibold text-charcoal">Complete Your Booking</h1>
+            <p className="mt-1 text-sm text-charcoal/55">
               {booking.flight
                 ? `${booking.flight.airline} · ${segment?.origin} → ${segment?.destination} · ${booking.flight.cabinClass}`
                 : `${booking.emptyLeg?.operatorName} · ${booking.emptyLeg?.aircraftType} · ${booking.emptyLeg?.origin} → ${booking.emptyLeg?.destination}`}
             </p>
           </div>
 
-          {error && <div className="rounded-lg border border-gold/30 bg-panel px-4 py-3 text-sm text-cream">{error}</div>}
+          {error && <div className="rounded-lg border border-azure/25 bg-panel px-4 py-3 text-sm text-charcoal shadow-sm">{error}</div>}
 
           <Section title="Traveler">
             {passenger ? (
-              <p className="text-cream/80">
+              <p className="text-charcoal/80">
                 {passenger.firstName} {passenger.lastName}
               </p>
             ) : (
@@ -167,7 +167,7 @@ function CheckoutContent() {
                 <button
                   type="button"
                   onClick={addPassenger}
-                  className="self-start rounded-lg bg-burgundy px-6 py-3 text-sm font-medium text-cream transition hover:bg-burgundy-dark"
+                  className="self-start rounded-lg bg-azure px-6 py-3 text-sm font-medium text-white transition hover:opacity-90"
                 >
                   Save Traveler
                 </button>
@@ -179,18 +179,18 @@ function CheckoutContent() {
             <>
               <Section title="Select Seat">
                 {seat ? (
-                  <p className="text-cream/80">Seat {seat.seatNumber} selected {Number(seat.priceAdjustment) > 0 && `(+$${seat.priceAdjustment})`}</p>
+                  <p className="text-charcoal/80">Seat {seat.seatNumber} selected {Number(seat.priceAdjustment) > 0 && `(+$${seat.priceAdjustment})`}</p>
                 ) : (
                   <div className="flex flex-col gap-2">
                     {SEAT_ROWS.map((row) => (
                       <div key={row} className="flex items-center gap-2">
-                        <span className="w-5 text-xs text-cream/40">{row}</span>
+                        <span className="w-5 text-xs text-charcoal/40">{row}</span>
                         {SEAT_LETTERS.map((letter) => (
                           <button
                             key={letter}
                             type="button"
                             onClick={() => selectSeat(`${row}${letter}`)}
-                            className="h-9 w-9 rounded-md border border-cream/20 text-xs text-cream/60 transition hover:border-gold hover:text-gold"
+                            className="h-9 w-9 rounded-md border border-charcoal/20 text-xs text-charcoal/60 transition hover:border-azure hover:text-azure"
                           >
                             {row}
                             {letter}
@@ -198,20 +198,20 @@ function CheckoutContent() {
                         ))}
                       </div>
                     ))}
-                    <p className="mt-1 text-xs text-cream/40">Rows 1–5 carry a $150 preferred-seating fee.</p>
+                    <p className="mt-1 text-xs text-charcoal/40">Rows 1–5 carry a $150 preferred-seating fee.</p>
                   </div>
                 )}
               </Section>
 
               <Section title="Baggage">
                 <div className="flex items-center justify-between">
-                  <p className="text-cream/70">Checked bags &middot; $120 each</p>
+                  <p className="text-charcoal/70">Checked bags &middot; $120 each</p>
                   <div className="flex items-center gap-4">
-                    <span className="text-cream/80">{checkedBagCount}</span>
+                    <span className="text-charcoal/80">{checkedBagCount}</span>
                     <button
                       type="button"
                       onClick={addCheckedBag}
-                      className="rounded-full border border-gold/40 px-3 py-1 text-sm text-gold transition hover:bg-gold/10"
+                      className="rounded-full border border-azure/40 px-3 py-1 text-sm text-azure transition hover:bg-azure-light"
                     >
                       + Add bag
                     </button>
@@ -222,8 +222,8 @@ function CheckoutContent() {
           )}
         </div>
 
-        <aside className="h-fit rounded-2xl border border-gold/30 bg-panel p-7">
-          <p className="mb-5 text-xs uppercase tracking-wide text-cream/50">Order Summary</p>
+        <aside className="h-fit rounded-2xl border border-azure/25 bg-panel p-7 shadow-sm">
+          <p className="mb-5 text-xs uppercase tracking-wide text-charcoal/50">Order Summary</p>
 
           <SummaryLine label={booking.flight ? "Fare" : "Charter fare"} amount={booking.flight?.amount ?? booking.emptyLeg?.amount ?? "0"} />
           {passenger?.seatSelections.map((s) => (
@@ -233,9 +233,9 @@ function CheckoutContent() {
             <SummaryLine key={b.id} label={`Checked bag ×${b.quantity}`} amount={b.priceAdjustment} prefix="+" />
           ))}
 
-          <div className="my-4 h-px bg-cream/10" />
+          <div className="my-4 h-px bg-charcoal/10" />
 
-          <div className="mb-6 flex justify-between font-display text-2xl font-semibold text-cream">
+          <div className="mb-6 flex justify-between font-display text-2xl font-semibold text-charcoal">
             <span>Total</span>
             <span>{Number(booking.totalAmount).toLocaleString(undefined, { style: "currency", currency: booking.currency, maximumFractionDigits: 0 })}</span>
           </div>
@@ -244,7 +244,7 @@ function CheckoutContent() {
             type="button"
             onClick={completeCheckout}
             disabled={!passenger || paying}
-            className="w-full rounded-lg bg-burgundy py-4 font-display text-lg font-semibold text-cream transition hover:bg-burgundy-dark disabled:opacity-40"
+            className="w-full rounded-lg bg-azure py-4 font-display text-lg font-semibold text-white transition hover:opacity-90 disabled:opacity-40"
           >
             {paying ? "Processing…" : "Complete Payment"}
           </button>
@@ -256,8 +256,8 @@ function CheckoutContent() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-gold/20 bg-panel/60 p-6">
-      <p className="mb-4 text-xs uppercase tracking-wide text-gold">{title}</p>
+    <section className="rounded-2xl border border-charcoal/10 bg-panel p-6 shadow-sm">
+      <p className="mb-4 text-xs uppercase tracking-wide text-azure">{title}</p>
       {children}
     </section>
   );
@@ -276,7 +276,7 @@ function LabeledInput({
 }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-xs uppercase tracking-wide text-cream/50">{label}</span>
+      <span className="mb-2 block text-xs uppercase tracking-wide text-charcoal/50">{label}</span>
       <input type={type} value={value} onChange={(event) => onChange(event.target.value)} className="input" />
     </label>
   );
@@ -284,7 +284,7 @@ function LabeledInput({
 
 function SummaryLine({ label, amount, prefix = "" }: { label: string; amount: string; prefix?: string }) {
   return (
-    <div className="mb-2 flex justify-between text-sm text-cream/70">
+    <div className="mb-2 flex justify-between text-sm text-charcoal/70">
       <span>{label}</span>
       <span>
         {prefix}${Number(amount).toLocaleString()}
