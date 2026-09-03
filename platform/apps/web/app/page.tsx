@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AirplaneWindow } from "../components/AirplaneWindow";
 import { AuthNav } from "../components/AuthNav";
+import { HomeSearchTabs } from "../components/HomeSearchTabs";
 
 const NAV_LINKS = [
   { label: "Flights", href: "/flights", enabled: true },
@@ -45,7 +46,11 @@ export default function HomePage() {
           <div className="mx-auto mt-4 h-6 w-px bg-white/50" />
         </section>
 
-        <section className="relative mx-auto grid max-w-5xl grid-cols-1 gap-10 px-6 pb-20 pt-6 sm:grid-cols-2">
+        <section className="relative mx-auto max-w-5xl px-6 pb-4">
+          <HomeSearchTabs />
+        </section>
+
+        <section className="relative mx-auto grid max-w-5xl grid-cols-1 gap-10 px-6 pb-20 pt-10 sm:grid-cols-2">
           <AirplaneWindow
             variant="day"
             eyebrow="Commercial Flights"
