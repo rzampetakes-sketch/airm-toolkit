@@ -37,15 +37,26 @@ export class PaymentsService {
       platformFeeAmount,
     });
 
-    return this.prisma.payment.create({
+    const succeeded = paymentIntent.status === "succeeded";
+
+    const payment = await this.prisma.payment.create({
       data: {
         bookingId: booking.id,
         stripePaymentIntentId: paymentIntent.id,
         amount: booking.totalAmount,
         currency: booking.currency,
         platformFeeAmount,
-        status: "unpaid",
+        status: succeeded ? "captured" : "unpaid",
       },
     });
+
+    // Real Stripe payments confirm asynchronously via webhook; the mock
+    // adapter (no STRIPE_SECRET_KEY) returns an already-succeeded intent,
+    // so confirm the booking immediately in that case.
+    if (succeeded) {
+      await this.prisma.booking.update({ where: { id: booking.id }, data: { status: "confirmed" } });
+    }
+
+    return payment;
   }
 }

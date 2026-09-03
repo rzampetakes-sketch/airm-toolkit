@@ -27,6 +27,22 @@ interface FlightSegment {
   origin: string;
   destination: string;
 }
+interface HotelBooking {
+  id: string;
+  hotelName: string;
+  roomType: string;
+  amount: string;
+}
+interface CarRentalBooking {
+  id: string;
+  vehicleType: string;
+  amount: string;
+}
+interface TaxiBooking {
+  id: string;
+  vehicleType: string;
+  amount: string;
+}
 interface BookingDetail {
   id: string;
   bookingType: "flight" | "empty_leg";
@@ -36,6 +52,38 @@ interface BookingDetail {
   flight: { airline: string; cabinClass: string; amount: string; segments: FlightSegment[] } | null;
   emptyLeg: { operatorName: string; aircraftType: string; origin: string; destination: string; amount: string } | null;
   passengers: Passenger[];
+  hotelBookings: HotelBooking[];
+  carRentalBookings: CarRentalBooking[];
+  taxiBookings: TaxiBooking[];
+}
+interface HotelOffer {
+  id: string;
+  sourcePropertyId: string;
+  name: string;
+  roomType: string;
+  checkIn: string;
+  checkOut: string;
+  amount: number;
+  currency: string;
+}
+interface CarRentalOffer {
+  id: string;
+  vehicleType: string;
+  pickupLocation: string;
+  dropoffLocation: string;
+  pickupAt: string;
+  dropoffAt: string;
+  amount: number;
+  currency: string;
+}
+interface TaxiOffer {
+  id: string;
+  vehicleType: string;
+  pickupLocation: string;
+  dropoffLocation: string;
+  pickupAt: string;
+  amount: number;
+  currency: string;
 }
 
 const SEAT_ROWS = [1, 2, 3, 4];
@@ -60,6 +108,10 @@ function CheckoutContent() {
   const [lastName, setLastName] = useState("Reyes");
   const [dateOfBirth, setDateOfBirth] = useState("1986-04-12");
 
+  const [hotelOffers, setHotelOffers] = useState<HotelOffer[] | null>(null);
+  const [carOffers, setCarOffers] = useState<CarRentalOffer[] | null>(null);
+  const [taxiOffers, setTaxiOffers] = useState<TaxiOffer[] | null>(null);
+
   const refetch = useCallback(() => {
     if (!bookingId) return;
     apiGet<BookingDetail>(`/bookings/${bookingId}`)
@@ -78,6 +130,9 @@ function CheckoutContent() {
   const seat = passenger?.seatSelections[0];
   const checkedBags = passenger?.baggageSelections.filter((b) => b.bagType === "checked") ?? [];
   const checkedBagCount = checkedBags.reduce((sum, b) => sum + b.quantity, 0);
+  const destination = segment?.destination ?? booking.emptyLeg?.destination ?? "";
+  const today = new Date().toISOString().slice(0, 10);
+  const inThreeDays = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
 
   async function addPassenger() {
     try {
@@ -105,6 +160,92 @@ function CheckoutContent() {
       refetch();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not add baggage");
+    }
+  }
+
+  async function searchHotels() {
+    try {
+      const results = await apiGet<HotelOffer[]>(
+        `/hotels/search?location=${encodeURIComponent(destination)}&checkIn=${today}&checkOut=${inThreeDays}&guests=1`,
+      );
+      setHotelOffers(results);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not search hotels");
+    }
+  }
+
+  async function addHotel(offer: HotelOffer) {
+    try {
+      await apiPost(`/bookings/${bookingId}/hotels`, {
+        sourcePropertyId: offer.sourcePropertyId,
+        hotelName: offer.name,
+        roomType: offer.roomType,
+        checkIn: offer.checkIn,
+        checkOut: offer.checkOut,
+        amount: offer.amount,
+        currency: offer.currency,
+      });
+      setHotelOffers(null);
+      refetch();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not add hotel");
+    }
+  }
+
+  async function searchCars() {
+    try {
+      const results = await apiGet<CarRentalOffer[]>(
+        `/car-rentals/search?pickupLocation=${encodeURIComponent(destination)}&dropoffLocation=${encodeURIComponent(destination)}&pickupAt=${today}T09:00:00Z&dropoffAt=${inThreeDays}T09:00:00Z`,
+      );
+      setCarOffers(results);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not search car rentals");
+    }
+  }
+
+  async function addCarRental(offer: CarRentalOffer) {
+    try {
+      await apiPost(`/bookings/${bookingId}/car-rentals`, {
+        vehicleType: offer.vehicleType,
+        pickupLocation: offer.pickupLocation,
+        dropoffLocation: offer.dropoffLocation,
+        pickupAt: offer.pickupAt,
+        dropoffAt: offer.dropoffAt,
+        amount: offer.amount,
+        currency: offer.currency,
+      });
+      setCarOffers(null);
+      refetch();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not add car rental");
+    }
+  }
+
+  async function searchTaxis() {
+    try {
+      const results = await apiGet<TaxiOffer[]>(
+        `/taxis/search?pickupLocation=${encodeURIComponent(destination)}+Airport&dropoffLocation=${encodeURIComponent(destination)}+Hotel&pickupAt=${today}T09:00:00Z&passengers=1`,
+      );
+      setTaxiOffers(results);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not search taxis");
+    }
+  }
+
+  async function addTaxi(offer: TaxiOffer) {
+    try {
+      await apiPost(`/bookings/${bookingId}/taxis`, {
+        vehicleType: offer.vehicleType,
+        pickupLocation: offer.pickupLocation,
+        dropoffLocation: offer.dropoffLocation,
+        pickupAt: offer.pickupAt,
+        amount: offer.amount,
+        currency: offer.currency,
+      });
+      setTaxiOffers(null);
+      refetch();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not add taxi");
     }
   }
 
@@ -220,6 +361,44 @@ function CheckoutContent() {
               </Section>
             </>
           )}
+
+          <Section title="Hotel">
+            {booking.hotelBookings[0] ? (
+              <p className="text-charcoal/80">
+                {booking.hotelBookings[0].hotelName} · {booking.hotelBookings[0].roomType}
+              </p>
+            ) : hotelOffers ? (
+              <OfferList offers={hotelOffers} label={(o) => `${o.name} · ${o.roomType}`} onSelect={addHotel} />
+            ) : (
+              <button type="button" onClick={searchHotels} className="self-start rounded-lg border border-azure/40 px-5 py-2.5 text-sm font-medium text-azure transition hover:bg-azure-light">
+                Search hotels in {destination || "destination"}
+              </button>
+            )}
+          </Section>
+
+          <Section title="Car Rental">
+            {booking.carRentalBookings[0] ? (
+              <p className="text-charcoal/80">{booking.carRentalBookings[0].vehicleType}</p>
+            ) : carOffers ? (
+              <OfferList offers={carOffers} label={(o) => o.vehicleType} onSelect={addCarRental} />
+            ) : (
+              <button type="button" onClick={searchCars} className="self-start rounded-lg border border-azure/40 px-5 py-2.5 text-sm font-medium text-azure transition hover:bg-azure-light">
+                Search car rentals in {destination || "destination"}
+              </button>
+            )}
+          </Section>
+
+          <Section title="Taxi">
+            {booking.taxiBookings[0] ? (
+              <p className="text-charcoal/80">{booking.taxiBookings[0].vehicleType}</p>
+            ) : taxiOffers ? (
+              <OfferList offers={taxiOffers} label={(o) => o.vehicleType} onSelect={addTaxi} />
+            ) : (
+              <button type="button" onClick={searchTaxis} className="self-start rounded-lg border border-azure/40 px-5 py-2.5 text-sm font-medium text-azure transition hover:bg-azure-light">
+                Search airport taxis in {destination || "destination"}
+              </button>
+            )}
+          </Section>
         </div>
 
         <aside className="h-fit rounded-2xl border border-azure/25 bg-panel p-7 shadow-sm">
@@ -231,6 +410,15 @@ function CheckoutContent() {
           ))}
           {checkedBags.map((b) => (
             <SummaryLine key={b.id} label={`Checked bag ×${b.quantity}`} amount={b.priceAdjustment} prefix="+" />
+          ))}
+          {booking.hotelBookings.map((h) => (
+            <SummaryLine key={h.id} label={h.hotelName} amount={h.amount} prefix="+" />
+          ))}
+          {booking.carRentalBookings.map((c) => (
+            <SummaryLine key={c.id} label={c.vehicleType} amount={c.amount} prefix="+" />
+          ))}
+          {booking.taxiBookings.map((t) => (
+            <SummaryLine key={t.id} label={t.vehicleType} amount={t.amount} prefix="+" />
           ))}
 
           <div className="my-4 h-px bg-charcoal/10" />
@@ -279,6 +467,39 @@ function LabeledInput({
       <span className="mb-2 block text-xs uppercase tracking-wide text-charcoal/50">{label}</span>
       <input type={type} value={value} onChange={(event) => onChange(event.target.value)} className="input" />
     </label>
+  );
+}
+
+function OfferList<T extends { id: string; amount: number; currency: string }>({
+  offers,
+  label,
+  onSelect,
+}: {
+  offers: T[];
+  label: (offer: T) => string;
+  onSelect: (offer: T) => void;
+}) {
+  if (offers.length === 0) return <p className="text-sm text-charcoal/50">No options found.</p>;
+  return (
+    <div className="flex flex-col gap-2">
+      {offers.map((offer) => (
+        <div key={offer.id} className="flex items-center justify-between rounded-lg border border-charcoal/10 px-4 py-3">
+          <span className="text-sm text-charcoal/80">{label(offer)}</span>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-charcoal/60">
+              {offer.amount.toLocaleString(undefined, { style: "currency", currency: offer.currency, maximumFractionDigits: 0 })}
+            </span>
+            <button
+              type="button"
+              onClick={() => onSelect(offer)}
+              className="rounded-full border border-azure/40 px-3 py-1 text-sm text-azure transition hover:bg-azure-light"
+            >
+              Add
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
