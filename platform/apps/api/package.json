@@ -16,9 +16,11 @@
   "dependencies": {
     "@nestjs/common": "^10.0.0",
     "@nestjs/core": "^10.0.0",
+    "@nestjs/jwt": "^12.0.1",
     "@nestjs/platform-express": "^10.0.0",
     "@prisma/client": "^5.15.0",
     "@travel-platform/types": "workspace:*",
+    "bcryptjs": "^3.0.3",
     "bullmq": "^5.7.0",
     "dotenv": "^16.4.5",
     "ioredis": "^5.4.1",
@@ -29,6 +31,7 @@
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
+    "@types/bcryptjs": "^3.0.0",
     "@types/node": "^20.0.0",
     "prisma": "^5.15.0",
     "typescript": "^5.5.0"

@@ -3,7 +3,8 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { EmptyLegListing, FlightOffer } from "@travel-platform/types";
-import { apiGet, apiPost, DEMO_USER_ID } from "../../lib/api";
+import { apiGet, apiPost } from "../../lib/api";
+import { getCurrentUserId } from "../../lib/auth";
 
 export default function ResultsPage() {
   return (
@@ -54,7 +55,7 @@ function ResultsContent() {
   async function selectFlight(offer: FlightOffer) {
     setSelectingId(offer.id);
     try {
-      const booking = await apiPost<{ id: string }>("/bookings/flights", { userId: DEMO_USER_ID, offer });
+      const booking = await apiPost<{ id: string }>("/bookings/flights", { userId: getCurrentUserId(), offer });
       router.push(`/checkout?bookingId=${booking.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not start booking");
@@ -65,7 +66,7 @@ function ResultsContent() {
   async function selectEmptyLeg(listing: EmptyLegListing) {
     setSelectingId(listing.id);
     try {
-      const booking = await apiPost<{ id: string }>("/bookings/empty-legs", { userId: DEMO_USER_ID, listing });
+      const booking = await apiPost<{ id: string }>("/bookings/empty-legs", { userId: getCurrentUserId(), listing });
       router.push(`/checkout?bookingId=${booking.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not start booking");

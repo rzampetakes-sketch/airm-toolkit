@@ -7,6 +7,8 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/a
  */
 export const DEMO_USER_ID = "00000000-0000-0000-0000-000000000001";
 
+export const ACCESS_TOKEN_STORAGE_KEY = "accessToken";
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -17,9 +19,15 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = typeof window !== "undefined" ? localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY) : null;
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
-    headers: { "Content-Type": "application/json", ...init?.headers },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...init?.headers,
+    },
   });
 
   if (!response.ok) {

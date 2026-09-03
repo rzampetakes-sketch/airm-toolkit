@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { AuthModule } from "./modules/auth/auth.module";
 import { FlightsModule } from "./modules/flights/flights.module";
 import { EmptyLegsModule } from "./modules/empty-legs/empty-legs.module";
 import { OperatorsModule } from "./modules/operators/operators.module";
@@ -12,6 +13,7 @@ import { UsersModule } from "./modules/users/users.module";
 
 @Module({
   imports: [
+    AuthModule,
     FlightsModule,
     EmptyLegsModule,
     OperatorsModule,

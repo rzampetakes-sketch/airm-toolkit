@@ -87,14 +87,15 @@ enum TaxiProviderSource {
 }
 
 model User {
-  id         String   @id @default(uuid())
-  email      String   @unique
-  phone      String?
-  firstName  String   @map("first_name")
-  lastName   String   @map("last_name")
-  role       UserRole @default(traveler)
-  operatorId String?  @map("operator_id")
-  createdAt  DateTime @default(now()) @map("created_at")
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String?  @map("password_hash")
+  phone        String?
+  firstName    String   @map("first_name")
+  lastName     String   @map("last_name")
+  role         UserRole @default(traveler)
+  operatorId   String?  @map("operator_id")
+  createdAt    DateTime @default(now()) @map("created_at")
 
   operator           Operator?           @relation(fields: [operatorId], references: [id])
   bookings           Booking[]
