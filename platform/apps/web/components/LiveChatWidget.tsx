@@ -40,9 +40,9 @@ function ChatWidgetPlaceholder() {
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
       {open && (
-        <div className="w-72 rounded-xl border border-gold/30 bg-cream-deep p-5 shadow-xl">
-          <p className="font-display text-lg text-burgundy">We&apos;re here to help</p>
-          <p className="mt-2 text-sm text-ink/70">
+        <div className="w-72 rounded-xl border border-gold/30 bg-panel p-5 shadow-xl">
+          <p className="font-display text-lg text-cream">We&apos;re here to help</p>
+          <p className="mt-2 text-sm text-cream/70">
             Live chat connects here once a Crisp account is configured (
             <code className="text-gold">NEXT_PUBLIC_CRISP_WEBSITE_ID</code>).
           </p>

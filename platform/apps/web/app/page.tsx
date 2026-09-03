@@ -10,7 +10,7 @@ const NAV_LINKS = [
 
 export default function HomePage() {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#12070c] text-cream">
+    <main className="relative min-h-screen overflow-hidden bg-night text-cream">
       <div
         className="pointer-events-none absolute inset-0"
         style={{ background: "radial-gradient(ellipse 80% 50% at 50% 0%, rgba(92,21,38,0.55), transparent 70%)" }}

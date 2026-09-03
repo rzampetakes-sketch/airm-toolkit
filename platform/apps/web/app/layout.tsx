@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${cormorant.variable} ${workSans.variable}`}>
-      <body className="bg-cream text-ink font-body">
+      <body className="bg-night text-cream font-body">
         {children}
         <LiveChatWidget />
       </body>

@@ -5,8 +5,12 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Boutique concierge palette: warm cream, deep wine burgundy,
-        // muted brass/gold reserved for accents and premium details.
+        // Boutique concierge palette, dark mode throughout the whole
+        // platform (matches the homepage's airplane-window hero): deep
+        // near-black burgundy background, cream text, muted brass/gold
+        // reserved for accents and premium details.
+        night: "#12070c",
+        panel: "#1e0f16",
         cream: "#f7f0e3",
         "cream-deep": "#efe1c8",
         burgundy: "#5c1526",
