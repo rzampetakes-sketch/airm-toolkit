@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { EmptyLegListing, FlightOffer } from "@travel-platform/types";
 import { apiGet, apiPost } from "../../lib/api";
 import { getCurrentUserId } from "../../lib/auth";
+import { RouteMap } from "../../components/RouteMap";
 
 export default function ResultsPage() {
   return (
@@ -177,6 +178,9 @@ function EmptyLegRow({
       <p className="font-display text-2xl font-semibold text-charcoal">
         {listing.amount.toLocaleString(undefined, { style: "currency", currency: listing.currency, maximumFractionDigits: 0 })}
       </p>
+      <div className="h-20 w-32 shrink-0 overflow-hidden rounded-lg border border-charcoal/10">
+        <RouteMap originCode={listing.origin} destinationCode={listing.destination} />
+      </div>
       <button
         type="button"
         onClick={onSelect}
